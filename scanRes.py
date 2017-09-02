@@ -15,6 +15,11 @@ class Utils:
         "mp4": "bin",
         "js": "bin"
     }
+	
+    ignoreFiles = [
+		"default.thm.json",
+		"default.res.json"
+	]
 
     @staticmethod
     def getFileNameAndExt(filename):
@@ -123,9 +128,9 @@ class Scanner:
         otherFiles = []
         excludePng = []
         for name in names:
-            if name == "default.res.json":
+            if name in Utils.ignoreFiles:
                 continue
-            if name != self.scanDirName and isRoot and os.path.isdir(name):
+            if name != self.scanDirName and isRoot:
                 continue
             f = os.path.join(absDir,name)
             if os.path.isdir(f):
