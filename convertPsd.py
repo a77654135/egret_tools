@@ -4,6 +4,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 import getopt
+import json
 from psd_tools import PSDImage,Group,Layer
 
 psdDir = ""
@@ -13,6 +14,13 @@ skinDir = ""
 absPsdDir = ""
 absImgDir = ""
 absSkinDir = ""
+
+resFile = "default.res.json"
+
+genImg = False
+intelligent = False
+
+resNameMap = {}
 
 def getNameAndExt(fileName):
     list = fileName.split(r".")
@@ -53,6 +61,9 @@ def parsePsd(fileName,depthPath):
     getImages(psd,depthPath[:])
 
 def getImages(psd,depthPath):
+    global genImg
+    if not genImg:
+        return
     assert isinstance(psd,PSDImage)
     global absImgDir
     for emd in psd.embedded:
@@ -69,7 +80,6 @@ def getImages(psd,depthPath):
                 f.write(data)
         except Exception,e:
             pass
-
 
 def parseGroup(group,depth,depthPath,root=False):
     assert isinstance(group,Group) or isinstance(group,PSDImage)
@@ -93,6 +103,7 @@ def parseGroup(group,depth,depthPath,root=False):
 def parseLayer(layer,depth,depthPath):
     assert isinstance(layer,Layer)
     global absImgDir
+    global intelligent
     content = u""
     prefix = depth * u"    "
     isLabel = True if layer.text_data is not None else False
@@ -126,7 +137,13 @@ def parseLayer(layer,depth,depthPath):
             content += u'visible="false" '
         if alpha != 1:
             content += u'alpha="{}" '.format(alpha)
-        content += u'source="{}" '.format(r"{}_png".format(name))
+        src = r"{}_png".format(name)
+        if intelligent:
+            length = len(depthPath)
+            if length > 0:
+                parentFolder = depthPath[length-1]
+                src = getIntelligentSource(src,parentFolder)
+        content += u'source="{}" '.format(src)
         content += u'/>'
     content += u'\n'
 
@@ -182,21 +199,78 @@ def parse():
             if ext == "psd":
                 parsePsd(f,[])
 
+def parseSingleResource(res):
+    global resNameMap
+    if res["type"] == "sheet":
+        if res["subkeys"]:
+            for name in res["subkeys"].split(r","):
+                if resNameMap.has_key(name):
+                   resNameMap[name].append(res["name"])
+                else:
+                    resNameMap[name] = []
+                    resNameMap[name].append(res["name"])
+    elif res["type"] == "image":
+        if resNameMap.has_key(res["name"]):
+            resNameMap[res["name"]].append(None)
+        else:
+            resNameMap[res["name"]] = []
+            resNameMap[res["name"]].append(None)
 
+def parseResourceFile():
+    global resFile
+    global resNameMap
+    resFile = r"E:\study\code\EgretProjects\league\resource\default.res.json"
+    if os.path.exists(resFile):
+        try:
+            with open(resFile,mode='r') as f:
+                content = json.load(f,encoding="utf-8")
+                if content["resources"] is not None:
+                    for res in content["resources"]:
+                        parseSingleResource(res)
+            print "parseResource success......"
+        except Exception,e:
+            print "parseResource failed......"
+            print e.message
+    else:
+        print 'resFile is not exist......'
 
+def getIntelligentSource(sourceName,parentFolder):
+    global resNameMap
+    try:
+        if resNameMap.has_key(sourceName):
+            folders = resNameMap[sourceName]
+            if parentFolder+"_json" in folders:
+                return parentFolder+r"_json."+sourceName
+            elif "common_json" in folders:
+                return r"common_json."+sourceName
+            else:
+                fd = folders[0]
+                if fd is None:
+                    return sourceName
+                else:
+                    return fd+r"."+sourceName
+        else:
+            print "cannot find texture: {}".format(sourceName.replace(r"_png",r".png"))
+            return sourceName
+    except Exception,e:
+        print "auto find texture error: " + e.message
+        return sourceName
 
 def main(argv):
     global psdDir
     global imgDir
     global skinDir
+    global resFile
+    global genImg
+    global intelligent
     try:
-        opts, args = getopt.getopt(argv, "p:i:s::", ["psdDir=", "imgDir=","skinDir="])
+        opts, args = getopt.getopt(argv, "p:i:s:r:", ["psdDir=", "imgDir=","skinDir=","genImg","resFile=","intelligent"])
     except getopt.GetoptError:
-        print 'usage python convertPsd.py -p <psdDir> -i <imgDir> -s <skinDir>'
+        print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg    -r resFile --intelligent'
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print 'usage python convertPsd.py -p <psdDir> -i <imgDir> -s <skinDir>'
+            print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg    -r resFile --intelligent'
             sys.exit(2)
         elif opt in ("-p", "--psdDir"):
             psdDir = arg
@@ -204,10 +278,22 @@ def main(argv):
             imgDir = arg
         elif opt in ("-s", "--skinDir"):
             skinDir = arg
+        elif opt in ("-r", "--resFile"):
+            resFile = arg
+        elif opt in ("--genImg",):
+            genImg = True
+        elif opt in ("--intelligent",):
+            intelligent = True
 
+    if intelligent:
+        parseResourceFile()
     parse()
 
 def main2():
+    '''
+    not use, for test
+    :return:
+    '''
     psd = PSDImage.load('test.psd')
 
     print psd
