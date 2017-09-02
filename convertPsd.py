@@ -19,6 +19,7 @@ resFile = "default.res.json"
 
 genImg = False
 intelligent = False
+force = False
 
 resNameMap = {}
 
@@ -34,7 +35,17 @@ def getNameAndExt(fileName):
 def parsePsd(fileName,depthPath):
     global absPsdDir
     global absSkinDir
+    global force
+
     name,ext = getNameAndExt(fileName)
+
+    exmlDir = os.path.join(absSkinDir, *depthPath)
+    exmlFile = os.path.join(exmlDir, u"{}Skin.exml".format(name))
+
+    if os.path.exists(exmlFile) and not force:
+        print "{} already exists, ignore......".format(u"{}Skin.exml".format(name))
+        return
+
     content = u""
     content += u"<?xml version='1.0' encoding='utf-8'?>"
     content += u'\n'
@@ -44,8 +55,6 @@ def parsePsd(fileName,depthPath):
     content += parseGroup(psd,0,depthPath[:],True)
     content += u'</e:Skin>'
 
-    exmlDir = os.path.join(absSkinDir,*depthPath)
-    exmlFile = os.path.join(exmlDir,u"{}Skin.exml".format(name))
     if os.path.exists(exmlFile):
         os.unlink(exmlFile)
     if not os.path.exists(exmlDir):
@@ -58,7 +67,7 @@ def parsePsd(fileName,depthPath):
     except Exception,e:
         print "parse PSD failed:  {}".format(fileName)
 
-    getImages(psd,depthPath[:])
+    getImages(psd, depthPath[:])
 
 def getImages(psd,depthPath):
     global genImg
@@ -263,14 +272,15 @@ def main(argv):
     global resFile
     global genImg
     global intelligent
+    global force
     try:
-        opts, args = getopt.getopt(argv, "p:i:s:r:", ["psdDir=", "imgDir=","skinDir=","genImg","resFile=","intelligent"])
+        opts, args = getopt.getopt(argv, "p:i:s:r:", ["psdDir=", "imgDir=","skinDir=","genImg","resFile=","intelligent","force"])
     except getopt.GetoptError:
-        print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg    -r resFile --intelligent'
+        print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg    -r resFile --intelligent --force'
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg    -r resFile --intelligent'
+            print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg    -r resFile --intelligent --force'
             sys.exit(2)
         elif opt in ("-p", "--psdDir"):
             psdDir = arg
@@ -284,6 +294,8 @@ def main(argv):
             genImg = True
         elif opt in ("--intelligent",):
             intelligent = True
+        elif opt in ("--force",):
+            force = True
 
     if intelligent:
         parseResourceFile()
