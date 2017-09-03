@@ -1,4 +1,8 @@
 #-.-coding:utf-8
+# author: talus
+# date: 2017/09/03
+# email: talus_wang@sina.com
+
 import os
 import sys
 reload(sys)
@@ -49,7 +53,9 @@ def parsePsd(fileName,depthPath):
     exmlFile = os.path.join(exmlDir, u"{}Skin.exml".format(name))
 
     if os.path.exists(exmlFile) and not force:
-        print "{} already exists, ignore......".format(u"{}Skin.exml".format(name))
+        print "--------------------------------------------"
+        print u"exml 文件已经存在，忽略：  {} ".format(u"{}Skin.exml".format(name))
+        print "--------------------------------------------"
         return
 
     content = u""
@@ -72,7 +78,9 @@ def parsePsd(fileName,depthPath):
             print u"生成 exml 文件：  " + exmlFile
             print u"解析 PSD 成功: {}".format(fileName)
     except Exception,e:
+        print "--------------------------------------------"
         print u"解析 PSD 失败:  {}".format(fileName)
+        print "--------------------------------------------"
 
     getImages(psd, depthPath[:])
 
@@ -132,7 +140,9 @@ def getDimension(layer):
             return box.x1, box.y1, box.width, box.height
         return 0,0,0,0
     except Exception,e:
+        print "--------------------------------------------"
         print u"解析图层组[ " + layer.name + u" ]错误：  " + e.message
+        print "--------------------------------------------"
         return 0,0,0,0
 
 #解析skinGroup
@@ -184,6 +194,7 @@ def parseSpecialGroup(group,depth,depthPath,root=False):
         else:
             return parseCommonGroup(group,depth,depthPath,root)
     else:
+        print "--------------------------------------------"
         raise ValueError(u"图层组命名错误:  " + name)
     return ""
 
@@ -345,10 +356,14 @@ def parseResourceFile():
                         parseSingleResource(res)
             print u"解析default.res.json文件 success......"
         except Exception,e:
+            print "--------------------------------------------"
             print u"解析default.res.json文件 failed......"
             print e.message
+            print "--------------------------------------------"
     else:
+        print "--------------------------------------------"
         print u'无法找到default.res.json文件 ......'
+        print "--------------------------------------------"
 
 #智能选择图片的最优source，减少drawcall
 def getIntelligentSource(sourceName,parentFolder):
@@ -367,10 +382,14 @@ def getIntelligentSource(sourceName,parentFolder):
                 else:
                     return fd+r"."+sourceName
         else:
+            print "--------------------------------------------"
             print u"找不到图片: {}".format(sourceName.replace(r"_png",r".png"))
+            print "--------------------------------------------"
             return sourceName
     except Exception,e:
+        print "--------------------------------------------"
         print u"智能寻找贴图错误: " + e.message
+        print "--------------------------------------------"
         return sourceName
 
 def main(argv):
@@ -385,11 +404,15 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, "p:i:s:r:", ["psdDir=", "imgDir=","skinDir=","genImg","genFontImg","resFile=","intelligent","force"])
     except getopt.GetoptError:
+        print "--------------------------------------------"
         print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg --genFontImg   -r resFile --intelligent --force'
+        print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
+            print "--------------------------------------------"
             print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg --genFontImg   -r resFile --intelligent --force'
+            print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-p", "--psdDir"):
             psdDir = arg
