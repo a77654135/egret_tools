@@ -20,6 +20,7 @@ resFile = "default.res.json"
 genImg = False
 intelligent = False
 force = False
+genFontImg = False
 
 resNameMap = {}
 currentPsdFile = ""
@@ -68,26 +69,33 @@ def parsePsd(fileName,depthPath):
     try:
         with open(exmlFile, mode="w+") as f:
             f.write(content)
-            print "parse PSD success: {}".format(fileName)
+            print u"生成 exml 文件：  " + exmlFile
+            print u"解析 PSD 成功: {}".format(fileName)
     except Exception,e:
-        print "parse PSD failed:  {}".format(fileName)
+        print u"解析 PSD 失败:  {}".format(fileName)
 
     getImages(psd, depthPath[:])
 
 #从psd文件中，生成图片
 def getImages(psd,depthPath):
     global genImg
-    if not genImg:
-        return
-    assert isinstance(psd,PSDImage)
+    global genFontImg
     global absImgDir
     global currentPsdFile
+    if not genImg:
+        return
+
+    assert isinstance(psd,PSDImage)
+
     dir = os.path.join(absImgDir, *depthPath)
     dir = os.path.join(dir, currentPsdFile)
     if not os.path.exists(dir):
         os.makedirs(dir)
     for emd in psd.embedded:
         filename = emd.filename
+        name,ext = getNameAndExt(filename)
+        if ext == "psd":
+            continue
         data = emd.data
         imgFile = os.path.join(dir,filename)
         if os.path.exists(imgFile):
@@ -95,8 +103,22 @@ def getImages(psd,depthPath):
         try:
             with open(imgFile,mode="wb") as f:
                 f.write(data)
+                print u"生成图片：  " + imgFile
         except Exception,e:
             pass
+    # #生成文字图片
+    # if genFontImg:
+    #     for layer in psd.layers:
+    #         if isinstance(layer,Group) and hasattr(layer,"name") and layer.name.startswith(r"$Skin"):
+    #             continue
+    #         if isinstance(layer,Layer) and layer.text_data is not None:
+    #             print u"生成文字图片：" + u"txt_{}.png".format(layer.name)
+    #             pngFile = os.path.join(dir,u"txt_{}.png".format(layer.name))
+    #             if os.path.exists(pngFile):
+    #                 os.unlink(pngFile)
+    #             layer_image = layer.as_PIL()
+    #             layer_image.save(pngFile)
+
 
 #获得图层或图层组的尺寸信息
 def getDimension(layer):
@@ -106,7 +128,7 @@ def getDimension(layer):
             box = layer.bbox
             return box.x1, box.y1, box.width, box.height
         elif isinstance(layer,Layer):
-            box = layer.transform_bbox
+            box = layer.transform_bbox if layer.transform_bbox is not None else layer.bbox
             return box.x1, box.y1, box.width, box.height
         return 0,0,0,0
     except Exception,e:
@@ -194,6 +216,10 @@ def parseLayer(layer,depth,depthPath):
     assert isinstance(layer,Layer)
     global absImgDir
     global intelligent
+    global genImg
+    global genFontImg
+    global currentPsdFile
+
     content = u""
     prefix = depth * u"    "
     isLabel = True if layer.text_data is not None else False
@@ -233,18 +259,18 @@ def parseLayer(layer,depth,depthPath):
         content += u'/>'
     content += u'\n'
 
-
-    # pngDir = os.path.join(absImgDir,*depthPath)
-    # pngFile = os.path.join(pngDir,u"{}.png".format(name))
-    # print "pngFile:  " + pngFile
-    # if os.path.exists(pngFile):
-    #     os.unlink(pngFile)
-    # if not os.path.exists(pngDir):
-    #     os.makedirs(pngDir)
-    #
-    # if not isLabel:
-    #     layer_image = layer.as_PIL()
-    #     layer_image.save(pngFile)
+    #遍历layer的时候，如果是字体，生成字体图片
+    if genImg and genFontImg and isLabel:
+        pngDir = os.path.join(absImgDir,*depthPath)
+        pngDir = os.path.join(pngDir,currentPsdFile)
+        pngFile = os.path.join(pngDir,u"txt_{}.png".format(name))
+        print u"生成字体图片:  " + pngFile
+        if os.path.exists(pngFile):
+            os.unlink(pngFile)
+        if not os.path.exists(pngDir):
+            os.makedirs(pngDir)
+        layer_image = layer.as_PIL()
+        layer_image.save(pngFile)
 
     return content
 
@@ -317,12 +343,12 @@ def parseResourceFile():
                 if content["resources"] is not None:
                     for res in content["resources"]:
                         parseSingleResource(res)
-            print "parseResource success......"
+            print u"解析default.res.json文件 success......"
         except Exception,e:
-            print "parseResource failed......"
+            print u"解析default.res.json文件 failed......"
             print e.message
     else:
-        print 'resFile is not exist......'
+        print u'无法找到default.res.json文件 ......'
 
 #智能选择图片的最优source，减少drawcall
 def getIntelligentSource(sourceName,parentFolder):
@@ -344,7 +370,7 @@ def getIntelligentSource(sourceName,parentFolder):
             print u"找不到图片: {}".format(sourceName.replace(r"_png",r".png"))
             return sourceName
     except Exception,e:
-        print "智能寻找贴图错误: " + e.message
+        print u"智能寻找贴图错误: " + e.message
         return sourceName
 
 def main(argv):
@@ -355,14 +381,15 @@ def main(argv):
     global genImg
     global intelligent
     global force
+    global genFontImg
     try:
-        opts, args = getopt.getopt(argv, "p:i:s:r:", ["psdDir=", "imgDir=","skinDir=","genImg","resFile=","intelligent","force"])
+        opts, args = getopt.getopt(argv, "p:i:s:r:", ["psdDir=", "imgDir=","skinDir=","genImg","genFontImg","resFile=","intelligent","force"])
     except getopt.GetoptError:
-        print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg    -r resFile --intelligent --force'
+        print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg --genFontImg   -r resFile --intelligent --force'
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg    -r resFile --intelligent --force'
+            print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg --genFontImg   -r resFile --intelligent --force'
             sys.exit(2)
         elif opt in ("-p", "--psdDir"):
             psdDir = arg
@@ -378,6 +405,8 @@ def main(argv):
             intelligent = True
         elif opt in ("--force",):
             force = True
+        elif opt in ("--genFontImg",):
+            genFontImg = True
 
     if intelligent:
         parseResourceFile()
