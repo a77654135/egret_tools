@@ -23,6 +23,7 @@ force = False
 
 resNameMap = {}
 
+#获得文件的名字和扩展名
 def getNameAndExt(fileName):
     list = fileName.split(r".")
     length = len(list)
@@ -50,7 +51,7 @@ def parsePsd(fileName,depthPath):
     content += u"<?xml version='1.0' encoding='utf-8'?>"
     content += u'\n'
     psd = PSDImage.load(os.path.join(os.path.join(absPsdDir,*depthPath),fileName))
-    content += u'<e:Skin class="{}" width="{}" height="{}" xmlns:e="http://ns.egret.com/eui" xmlns:w="http://ns.egret.com/wing">'.format(name+"Skin",psd.header.width,psd.header.height)
+    content += u'<e:Skin class="{}" width="{}" height="{}" xmlns:e="http://ns.egret.com/eui" xmlns:w="http://ns.egret.com/wing" xmlns:n="*">'.format(name+"Skin",psd.header.width,psd.header.height)
     content += u'\n'
     content += parseGroup(psd,0,depthPath[:],True)
     content += u'</e:Skin>'
@@ -69,6 +70,7 @@ def parsePsd(fileName,depthPath):
 
     getImages(psd, depthPath[:])
 
+#从psd文件中，生成图片
 def getImages(psd,depthPath):
     global genImg
     if not genImg:
@@ -77,8 +79,10 @@ def getImages(psd,depthPath):
     global absImgDir
     for emd in psd.embedded:
         filename = emd.filename
+        name,ext = getNameAndExt(filename)
         data = emd.data
         dir = os.path.join(absImgDir,*depthPath)
+        dir = os.path.join(dir,name)
         imgFile = os.path.join(dir,filename)
         if os.path.exists(imgFile):
             os.unlink(imgFile)
@@ -90,8 +94,80 @@ def getImages(psd,depthPath):
         except Exception,e:
             pass
 
+#获得图层或图层组的尺寸信息
+def getDimension(layer):
+    assert isinstance(layer, Group) or isinstance(layer, Layer)
+    try:
+        if isinstance(layer,Group):
+            box = layer.bbox
+            return box.x1, box.y1, box.width, box.height
+        elif isinstance(layer,Layer):
+            box = layer.transform_bbox
+            return box.x1, box.y1, box.width, box.height
+        return 0,0,0,0
+    except Exception,e:
+        print u"解析图层组[ " + layer.name + u" ]错误：  " + e.message
+        return 0,0,0,0
+
+#解析skinGroup
+def parseSkinGroup(group,depth,depthPath,root=False):
+    name = group.name[1:]
+    nameList = name.split(r"_")
+    id = nameList[1]
+    x,y,width,height = getDimension(group)
+    prefix = depth * u"    "
+    content = u""
+    content += u"{}<e:Panel ".format(prefix)
+    content += u'x="{}" '.format(x)
+    content += u'y="{}" '.format(y)
+    content += u'width="{}" '.format(width)
+    content += u'height="{}" '.format(height)
+    content += u'skinName="{}" '.format(id + "Skin")
+    content += u'/>'
+    content += u'\n'
+    return content
+
+
+#解析其他命名group，扩展group的功能，允许自定义
+def parseCommonGroup(group,depth,depthPath,root=False):
+    name = group.name[1:]
+    nameList = name.split(r"_")
+    cls = nameList[0]
+    id = nameList[1]
+    x, y, width, height = getDimension(group)
+    prefix = depth * u"    "
+    content = u""
+    content += u"{0}<n:{1} ".format(prefix,cls)
+    content += u'id="{}" '.format(id)
+    content += u'x="{}" '.format(x)
+    content += u'y="{}" '.format(y)
+    content += u'width="{}" '.format(width)
+    content += u'height="{}" '.format(height)
+    content += u'/>'
+    content += u'\n'
+    return content
+
+#解析特殊的图层组，根据命名规则，生成对应的信息
+def parseSpecialGroup(group,depth,depthPath,root=False):
+    name = group.name[1:]
+    nameList = name.split(r"_")
+    if len(nameList) == 2:
+        cls = nameList[0]
+        if cls == "Skin":
+            return parseSkinGroup(group,depth,depthPath,root)
+        else:
+            return parseCommonGroup(group,depth,depthPath,root)
+    else:
+        raise ValueError(u"图层组命名错误:  " + name)
+    return ""
+
+#解析psd图层组
 def parseGroup(group,depth,depthPath,root=False):
     assert isinstance(group,Group) or isinstance(group,PSDImage)
+    if hasattr(group,"name"):
+        if root == False and group.name.startswith(r"$"):
+            return parseSpecialGroup(group,depth,depthPath,root)
+
     content = u""
     prefix = depth * u"    "
     if root == False:
@@ -109,6 +185,7 @@ def parseGroup(group,depth,depthPath,root=False):
         content += u'\n'
     return content
 
+#解析psd图层
 def parseLayer(layer,depth,depthPath):
     assert isinstance(layer,Layer)
     global absImgDir
@@ -117,11 +194,7 @@ def parseLayer(layer,depth,depthPath):
     prefix = depth * u"    "
     isLabel = True if layer.text_data is not None else False
     name = layer.name
-    box = layer.transform_bbox or layer.bbox
-    x = box.x1
-    y = box.y1
-    width = box.width
-    height = box.height
+    x,y,width,height = getDimension(layer)
     visible = layer.visible
     alpha = 1 if layer.opacity != 255 else layer.opacity / 255
 
@@ -171,6 +244,7 @@ def parseLayer(layer,depth,depthPath):
 
     return content
 
+#遍历psd的目录
 def parseDir(depthPath):
     global absPsdDir
     dir = os.path.join(absPsdDir,*depthPath)
@@ -208,6 +282,7 @@ def parse():
             if ext == "psd":
                 parsePsd(f,[])
 
+#解析组员组中的一个资源
 def parseSingleResource(res):
     global resNameMap
     if res["type"] == "sheet":
@@ -225,10 +300,12 @@ def parseSingleResource(res):
             resNameMap[res["name"]] = []
             resNameMap[res["name"]].append(None)
 
+
+#解析default.res.json文件
 def parseResourceFile():
     global resFile
     global resNameMap
-    resFile = r"E:\study\code\EgretProjects\league\resource\default.res.json"
+    #resFile = r"E:\study\code\EgretProjects\league\resource\default.res.json"
     if os.path.exists(resFile):
         try:
             with open(resFile,mode='r') as f:
@@ -243,6 +320,7 @@ def parseResourceFile():
     else:
         print 'resFile is not exist......'
 
+#智能选择图片的最优source，减少drawcall
 def getIntelligentSource(sourceName,parentFolder):
     global resNameMap
     try:
@@ -259,10 +337,10 @@ def getIntelligentSource(sourceName,parentFolder):
                 else:
                     return fd+r"."+sourceName
         else:
-            print "cannot find texture: {}".format(sourceName.replace(r"_png",r".png"))
+            print u"找不到图片: {}".format(sourceName.replace(r"_png",r".png"))
             return sourceName
     except Exception,e:
-        print "auto find texture error: " + e.message
+        print "智能寻找贴图错误: " + e.message
         return sourceName
 
 def main(argv):
@@ -303,10 +381,10 @@ def main(argv):
 
 def main2():
     '''
-    not use, for test
+    not use, for debug
     :return:
     '''
-    psd = PSDImage.load('test.psd')
+    psd = PSDImage.load(r'E:\study\code\EgretProjects\psd\common\test1.psd')
 
     print psd
 
