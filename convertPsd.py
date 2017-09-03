@@ -22,6 +22,7 @@ intelligent = False
 force = False
 
 resNameMap = {}
+currentPsdFile = ""
 
 #获得文件的名字和扩展名
 def getNameAndExt(fileName):
@@ -37,8 +38,11 @@ def parsePsd(fileName,depthPath):
     global absPsdDir
     global absSkinDir
     global force
+    global currentPsdFile
 
     name,ext = getNameAndExt(fileName)
+
+    currentPsdFile = name
 
     exmlDir = os.path.join(absSkinDir, *depthPath)
     exmlFile = os.path.join(exmlDir, u"{}Skin.exml".format(name))
@@ -77,17 +81,17 @@ def getImages(psd,depthPath):
         return
     assert isinstance(psd,PSDImage)
     global absImgDir
+    global currentPsdFile
+    dir = os.path.join(absImgDir, *depthPath)
+    dir = os.path.join(dir, currentPsdFile)
+    if not os.path.exists(dir):
+        os.makedirs(dir)
     for emd in psd.embedded:
         filename = emd.filename
-        name,ext = getNameAndExt(filename)
         data = emd.data
-        dir = os.path.join(absImgDir,*depthPath)
-        dir = os.path.join(dir,name)
         imgFile = os.path.join(dir,filename)
         if os.path.exists(imgFile):
             os.unlink(imgFile)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
         try:
             with open(imgFile,mode="wb") as f:
                 f.write(data)
