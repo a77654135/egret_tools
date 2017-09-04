@@ -150,15 +150,18 @@ def parseSkinGroup(group,depth,depthPath,root=False):
     name = group.name[1:]
     nameList = name.split(r"_")
     id = nameList[1]
-    x,y,width,height = getDimension(group)
+    layer = group.layers[0]
+    nm = layer.name
+    x,y,width,height = getDimension(layer)
     prefix = depth * u"    "
     content = u""
     content += u"{}<e:Panel ".format(prefix)
+    content += u'id="{}" '.format(id)
     content += u'x="{}" '.format(x)
     content += u'y="{}" '.format(y)
     content += u'width="{}" '.format(width)
     content += u'height="{}" '.format(height)
-    content += u'skinName="{}" '.format(id + "Skin")
+    content += u'skinName="{}" '.format(nm + "Skin")
     content += u'/>'
     content += u'\n'
     return content
@@ -440,7 +443,7 @@ def main2():
     not use, for debug
     :return:
     '''
-    psd = PSDImage.load(r'E:\study\code\EgretProjects\psd\common\test1.psd')
+    psd = PSDImage.load(r'C:\work\N5\roll\psd\test.psd')
 
     print psd
 
