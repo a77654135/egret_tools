@@ -129,7 +129,7 @@ def getImages(psd,depthPath):
 
 
 #获得图层或图层组的尺寸信息
-def getDimension(layer):
+def getDimension(layer,isButton=False):
     assert isinstance(layer, Group) or isinstance(layer, Layer)
     try:
         if isinstance(layer,Group):
@@ -145,61 +145,176 @@ def getDimension(layer):
         print "--------------------------------------------"
         return 0,0,0,0
 
-#解析skinGroup
-def parseSkinGroup(group,depth,depthPath,root=False):
-    name = group.name[1:]
-    nameList = name.split(r"_")
-    id = nameList[1]
-    layer = group.layers[0]
-    nm = layer.name
-    x,y,width,height = getDimension(layer)
+#解析属性 名字：属性名=属性值;属性名=属性值;属性名=属性值
+def getAttrs(layer):
+    assert isinstance(layer,Layer) or isinstance(layer,Group)
+    ret = {}
+    try:
+        if layer.name:
+            lst = layer.name.split(r":")
+            name = lst[0]
+            ret["clsName"] = name[1:] if name.startswith(r"$") else name
+            if len(lst) > 1:
+                attrs = lst[1]
+                if attrs.endswith(r";"):
+                    attrs = attrs.rstrip(r";")
+                for attr in attrs.split(r";"):
+                    k,v = attr.split(r"=")
+                    ret[k] = v
+            return ret
+        else:
+            return None
+    except Exception,e:
+        print layer.name
+        print u"解析名字属性出错： " + e.message
+        return None
+
+#合并属性
+def mergeAttr(attr1,attr2):
+    assert isinstance(attr1,dict) or isinstance(attr2,dict)
+    if attr2 is None:
+        return attr1
+    if attr1 is None:
+        return attr2
+    ret = {}
+    for k,v in attr1.iteritems():
+        ret[k] = v
+    for k,v in attr2.iteritems():
+        ret[k] = v
+    return ret
+
+#生成信息
+def genContent(layer,clz,otherAttr,depth,isButton=False):
+    assert isinstance(layer,Layer) or isinstance(layer,Group)
+    attrs = getAttrs(layer)
+    if attrs is None:
+        return ""
+
+    x, y, width, height = getDimension(layer)
+    if isButton:
+        x,y = getCenterPos(x,y,width,height)
+    oldAttrs = {
+        "x": x,
+        "y": y,
+        "width": width,
+        "height": height,
+        "touchEnabled": "false"
+    }
+    if isButton:
+        oldAttrs["anchorOffsetX"] = width * 0.5
+        oldAttrs["anchorOffsetY"] = height * 0.5
+        oldAttrs["touchChildren"] = "false"
+        oldAttrs["touchEnabled"] = "true"
+
+    newAttrs = mergeAttr(oldAttrs, otherAttr)
+    newAttrs = mergeAttr(newAttrs,attrs)
+
     prefix = depth * u"    "
     content = u""
-    content += u"{}<e:Panel ".format(prefix)
-    content += u'id="{}" '.format(id)
-    content += u'x="{}" '.format(x)
-    content += u'y="{}" '.format(y)
-    content += u'width="{}" '.format(width)
-    content += u'height="{}" '.format(height)
-    content += u'skinName="{}" '.format(nm + "Skin")
+    content += u"{0}<{1} ".format(prefix, clz)
+    for k, v in newAttrs.iteritems():
+        if k == "clsName":
+            continue
+        content += u'{0}="{1}" '.format(k, v)
     content += u'/>'
     content += u'\n'
     return content
 
+
+#解析skinGroup
+def parseSkinGroup(group,depth,depthPath,root=False):
+    layer = group.layers[0]
+    nm = layer.name
+    x, y, width, height = getDimension(layer)
+
+    otherAttr = {
+        "skinName": nm + "Skin",
+        "x": x,
+        "y": y,
+        "width": width,
+        "height": height
+    }
+    return genContent(group,r"e:Panel",otherAttr,depth)
 
 #解析其他命名group，扩展group的功能，允许自定义
 def parseCommonGroup(group,depth,depthPath,root=False):
-    name = group.name[1:]
-    nameList = name.split(r"_")
-    cls = nameList[0]
-    id = nameList[1]
-    x, y, width, height = getDimension(group)
-    prefix = depth * u"    "
-    content = u""
-    content += u"{0}<n:{1} ".format(prefix,cls)
-    content += u'id="{}" '.format(id)
-    content += u'x="{}" '.format(x)
-    content += u'y="{}" '.format(y)
-    content += u'width="{}" '.format(width)
-    content += u'height="{}" '.format(height)
-    content += u'/>'
-    content += u'\n'
-    return content
+    attrs = getAttrs(group)
+    if attrs is None:
+        return
+    cls = attrs["clsName"]
+    return genContent(group,r"n:"+cls,None,depth)
+
+#通过id属性获得图层
+def getLayerById(group,id):
+    assert isinstance(group,Group)
+    for layer in group.layers:
+        attrs = getAttrs(layer)
+        if attrs.has_key("id") and attrs["id"] == id:
+            return layer
+    return None
+
+#获取图层的资源属性
+def getLayerSrc(layer,depthPath):
+    assert isinstance(layer,Layer)
+    names = layer.name.split(r":")
+    src = r"{}_png".format(names[0])
+    if intelligent:
+        length = len(depthPath)
+        if length > 0:
+            parentFolder = depthPath[length - 1]
+            src = getIntelligentSource(src, parentFolder)
+    return src
+
+#如果是按钮，设置anchorOffset为中心位置，重新计算x,y坐标
+def getCenterPos(x,y,width,height):
+    hw = width * 0.5
+    hh = height * 0.5
+    return x+hw,y+hh
+
+#解析特殊的图层组，根据命名规则，生成对应的信息
+def parseButtonGroup(group,depth,depthPath,root=False):
+    assert isinstance(group,Group)
+    cls = r"n:BaseButton"
+    otherAttr = {
+        "touchChildren":'false',
+        "touchEnabled":'true'
+    }
+    layers = group.layers
+    length = len(layers)
+    attrs = getAttrs(group)
+    if attrs.has_key("id"):
+        otherAttr["name"] = attrs["id"]
+    if length == 1:
+        otherAttr["skinName"] = "SimpleButtonSkin"
+        layer = layers[0]
+        src = getLayerSrc(layer,depthPath)
+        otherAttr["bgSource"] = src
+    elif length > 1:
+        bgLayer = getLayerById(group,"bg")
+        iconLayer = getLayerById(group,"icon")
+        if bgLayer is not None and iconLayer is not None:
+            otherAttr["skinName"] = "IconButtonSkin"
+        if bgLayer is not None:
+            bgSrc = getLayerSrc(bgLayer,depthPath)
+            otherAttr["bgSource"] = bgSrc
+        if iconLayer is not None:
+            iconSrc = getLayerSrc(iconLayer,depthPath)
+            otherAttr["iconSource"] = iconSrc
+    return genContent(group,cls,otherAttr,depth,True)
+
 
 #解析特殊的图层组，根据命名规则，生成对应的信息
 def parseSpecialGroup(group,depth,depthPath,root=False):
-    name = group.name[1:]
-    nameList = name.split(r"_")
-    if len(nameList) == 2:
-        cls = nameList[0]
-        if cls == "Skin":
-            return parseSkinGroup(group,depth,depthPath,root)
-        else:
-            return parseCommonGroup(group,depth,depthPath,root)
+    attrs = getAttrs(group)
+    if attrs is None:
+        return
+    cls = attrs["clsName"]
+    if cls == "Skin":
+        return parseSkinGroup(group, depth, depthPath, root)
+    elif cls == "Button":
+        return parseButtonGroup(group, depth, depthPath, root)
     else:
-        print "--------------------------------------------"
-        raise ValueError(u"图层组命名错误:  " + name)
-    return ""
+        return parseCommonGroup(group, depth, depthPath, root)
 
 #解析psd图层组
 def parseGroup(group,depth,depthPath,root=False):
@@ -208,11 +323,26 @@ def parseGroup(group,depth,depthPath,root=False):
         if root == False and group.name.startswith(r"$"):
             return parseSpecialGroup(group,depth,depthPath,root)
 
+
     content = u""
     prefix = depth * u"    "
     if root == False:
-        content += u'{}<e:Group x="0" y="0" width="100%" height="100%">'.format(prefix)
-        content += u'\n'
+        oldAttrs = {
+            "x": "0",
+            "y": "0",
+            "width": "100%",
+            "height": "100%",
+            "touchEnabled":"false",
+            "touchChildren":"false"
+        }
+        attrs = getAttrs(group)
+        newAttrs = mergeAttr(oldAttrs, attrs)
+        content += u'{}<e:Group '.format(prefix)
+        for k,v in newAttrs.iteritems():
+            if k == "clsName":
+                continue
+            content += u'{0}="{1}" '.format(k,v)
+        content += u'>\n'
     layers = group.layers
     layers.reverse()
     for layer in layers:
@@ -242,34 +372,45 @@ def parseLayer(layer,depth,depthPath):
     visible = layer.visible
     alpha = 1 if layer.opacity != 255 else layer.opacity / 255
 
+    oldAttrs = {
+        "x":x,
+        "y":y,
+        "width":width,
+        "height":height,
+        "touchEnabled":"false"
+    }
+    if not visible:
+        oldAttrs["visible"] = "false"
+    if alpha != 1:
+        oldAttrs["alpha"] = alpha
     if isLabel:
-        content += u'{}<e:Label '.format(prefix)
-        content += u'x="{}" '.format(x)
-        content += u'y="{}" '.format(y)
-        content += u'fontFamily="Microsoft YaHei" '
-        content += u'text="{}" '.format(name)
-        if not visible:
-            content += u'visible="false" '
-        if alpha != 1:
-            content += u'alpha="{}" '.format(alpha)
-        content += u'/>'
+        oldAttrs["fontFamily"] = "Microsoft YaHei"
+        oldAttrs["text"] = layer.text_data.text
     else:
-        content += u'{}<e:Image '.format(prefix)
-        content += u'x="{}" '.format(x)
-        content += u'y="{}" '.format(y)
-        content += u'width="{}" '.format(width)
-        content += u'height="{}" '.format(height)
-        if not visible:
-            content += u'visible="false" '
-        if alpha != 1:
-            content += u'alpha="{}" '.format(alpha)
         src = r"{}_png".format(name)
         if intelligent:
             length = len(depthPath)
             if length > 0:
-                parentFolder = depthPath[length-1]
-                src = getIntelligentSource(src,parentFolder)
-        content += u'source="{}" '.format(src)
+                parentFolder = depthPath[length - 1]
+                src = getIntelligentSource(src, parentFolder)
+        oldAttrs["source"] = src
+
+    attrs = getAttrs(layer)
+    newAttrs = mergeAttr(oldAttrs, attrs)
+
+    if isLabel:
+        content += u'{}<e:Label '.format(prefix)
+        for k,v in newAttrs.iteritems():
+            if k == "clsName":
+                continue
+            content += u'{0}="{1}" '.format(k,v)
+        content += u'/>'
+    else:
+        content += u'{}<e:Image '.format(prefix)
+        for k,v in newAttrs.iteritems():
+            if k == "clsName":
+                continue
+            content += u'{0}="{1}" '.format(k,v)
         content += u'/>'
     content += u'\n'
 
@@ -434,6 +575,7 @@ def main(argv):
         elif opt in ("--genFontImg",):
             genFontImg = True
 
+    #psdDir = r"C:\work\N5\roll\psd"
     if intelligent:
         parseResourceFile()
     parse()
@@ -446,6 +588,7 @@ def main2():
     psd = PSDImage.load(r'C:\work\N5\roll\psd\test.psd')
 
     print psd
+    getAttrs(psd.layers[2])
 
 if __name__ == '__main__':
     #main2()
