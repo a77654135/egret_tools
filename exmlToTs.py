@@ -34,7 +34,6 @@ class ExmlHandler( xml.sax.ContentHandler):
            self.hasButton = False
            className = attributes.getValue("class")
            self.tsName = className.replace("Skin","")
-           print self.tsName
        elif re.match(r".*Button.*",tag):
            id = attributes.getValue("id")
            name = attributes.getValue("name")
@@ -224,9 +223,9 @@ def parseFile(parser,fileName,depthPath,exmlFile):
 
     depthDir = os.path.join(tsDir,*depthPath)
     depthFile = os.path.join(depthDir,fileName.replace("Skin","") + ".ts")
-    # if os.path.exists(depthFile):
-    #     #文件存在，不生成
-    #     return
+    if os.path.exists(depthFile):
+        #文件存在，不生成
+        return
 
     dstDir = depthDir
     dstFile = depthFile
@@ -250,13 +249,13 @@ def main(argv):
         opts, args = getopt.getopt(argv, "e:t:", ["exmlDir=", "tsDir="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'usage python convertPsd.py -e <exmlDir> -t <tsDir>'
+        print 'usage: python convertPsd.py -e <exmlDir> -t <tsDir>'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'usage python convertPsd.py -e <exmlDir> -t <tsDir>'
+            print 'usage: python convertPsd.py -e <exmlDir> -t <tsDir>'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-e", "--exmlDir"):
@@ -264,8 +263,8 @@ def main(argv):
         elif opt in ("-t", "--tsDir"):
             tsDir = os.path.abspath(arg)
 
-    exmlDir = r"C:\work\N5\roll\client\client\resource\skins"
-    tsDir = r"C:\work\N5\roll\client\client\src\game\view"
+    # exmlDir = r"C:\work\N5\roll\client\client\resource\skins"
+    # tsDir = r"C:\work\N5\roll\client\client\src\game\view"
 
     parse()
 
