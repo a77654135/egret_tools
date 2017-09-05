@@ -534,9 +534,12 @@ def parseResourceFile():
 #智能选择图片的最优source，减少drawcall
 def getIntelligentSource(sourceName,parentFolder):
     global resNameMap
+    global currentPsdFile
     try:
         if resNameMap.has_key(sourceName):
             folders = resNameMap[sourceName]
+            if currentPsdFile+"_json" in folders:
+                return currentPsdFile+r"_json."+sourceName
             if parentFolder+"_json" in folders:
                 return parentFolder+r"_json."+sourceName
             elif "common_json" in folders:
