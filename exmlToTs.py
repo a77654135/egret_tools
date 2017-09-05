@@ -225,6 +225,7 @@ def parseFile(parser,fileName,depthPath,exmlFile):
     depthFile = os.path.join(depthDir,fileName.replace("Skin","") + ".ts")
     if os.path.exists(depthFile):
         #文件存在，不生成
+        print u"文件已存在：" + depthFile
         return
 
     dstDir = depthDir
@@ -266,7 +267,10 @@ def main(argv):
     # exmlDir = r"C:\work\N5\roll\client\client\resource\skins"
     # tsDir = r"C:\work\N5\roll\client\client\src\game\view"
 
-    parse()
+    try:
+        parse()
+    except Exception,e:
+        print u"出错咯： " + e.message
 
 
 if __name__ == '__main__':
