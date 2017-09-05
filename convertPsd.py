@@ -318,6 +318,9 @@ def parseSpecialGroup(group,depth,depthPath,root=False):
 #解析psd图层组
 def parseGroup(group,depth,depthPath,root=False):
     assert isinstance(group,Group) or isinstance(group,PSDImage)
+    if root == False and isLayerLocked(group):
+        #如果图层组锁定了，就不要解析了
+        return ""
     if hasattr(group,"name"):
         if root == False and group.name.startswith(r"$"):
             return parseSpecialGroup(group,depth,depthPath,root)
@@ -345,6 +348,9 @@ def parseGroup(group,depth,depthPath,root=False):
     layers = group.layers
     layers.reverse()
     for layer in layers:
+        if isLayerLocked(layer):
+            #图层被锁定，不解析
+            continue
         if isinstance(layer,Layer):
             content += parseLayer(layer,depth+1,depthPath[:])
         elif isinstance(layer,Group):
@@ -484,6 +490,15 @@ def parseSingleResource(res):
             resNameMap[res["name"]] = []
             resNameMap[res["name"]].append(None)
 
+def isLayerLocked(layer):
+    assert isinstance(layer,Layer) or isinstance(layer,Group)
+    locked = False
+    try:
+        locked = layer._info[9][0]
+    except:
+        pass
+    return locked
+
 
 #解析default.res.json文件
 def parseResourceFile():
@@ -588,6 +603,8 @@ def main2():
 
     print psd
     getAttrs(psd.layers[2])
+    for layer in psd.layers:
+        print isLayerLocked(layer)
 
 if __name__ == '__main__':
     #main2()
