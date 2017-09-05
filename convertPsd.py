@@ -130,6 +130,7 @@ def getImages(psd,depthPath):
 
 #获得图层或图层组的尺寸信息
 def getDimension(layer,isButton=False):
+    #"".strip()
     assert isinstance(layer, Group) or isinstance(layer, Layer)
     try:
         if isinstance(layer,Group):
@@ -140,9 +141,9 @@ def getDimension(layer,isButton=False):
             return box.x1, box.y1, box.width, box.height
         return 0,0,0,0
     except Exception,e:
-        print "--------------------------------------------"
-        print u"解析图层组[ " + layer.name + u" ]错误：  " + e.message
-        print "--------------------------------------------"
+        # print "--------------------------------------------"
+        # print u"解析图层组[ " + layer.name + u" ]错误：  " + e.message
+        # print "--------------------------------------------"
         return 0,0,0,0
 
 #解析属性 名字：属性名=属性值;属性名=属性值;属性名=属性值
@@ -241,7 +242,14 @@ def parseCommonGroup(group,depth,depthPath,root=False):
     if attrs is None:
         return
     cls = attrs["clsName"]
-    return genContent(group,r"n:"+cls,None,depth)
+    clz = cls[2:]
+    if cls.startswith(r"e_"):
+        clz = r"e:" + clz
+        return genContent(group,clz,None,depth)
+    elif cls.startswith(r"n_"):
+        clz = r"n:" + clz
+        return genContent(group, clz, None, depth)
+    return ""
 
 #通过id属性获得图层
 def getLayerById(group,id):
@@ -312,7 +320,7 @@ def parseSpecialGroup(group,depth,depthPath,root=False):
         return parseSkinGroup(group, depth, depthPath, root)
     elif cls == "Button":
         return parseButtonGroup(group, depth, depthPath, root)
-    else:
+    elif cls.startswith(r"e_") or cls.startswith(r"n_"):
         return parseCommonGroup(group, depth, depthPath, root)
 
 #解析psd图层组
