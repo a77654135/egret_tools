@@ -7,6 +7,7 @@ sys.setdefaultencoding('utf-8')
 import getopt
 import xml.sax
 import re
+import json
 import datetime
 
 exmlDir = ""
@@ -14,6 +15,8 @@ tsDir = ""
 
 dstDir = ""
 dstFile = ""
+ignoreFile = ""
+ignoreList = []
 
 
 class ExmlHandler( xml.sax.ContentHandler):
@@ -32,6 +35,7 @@ class ExmlHandler( xml.sax.ContentHandler):
            self.ids = []
            self.buttonNames = []
            self.hasButton = False
+
            className = attributes.getValue("class")
            self.tsName = className.replace("Skin","")
        elif re.match(r".*Button.*",tag):
@@ -204,7 +208,11 @@ def getNameAndExt(fileName):
     return name,ext
 
 def walkDir(dir,parser,depthPath):
+    global ignoreList
+
     for name in os.listdir(dir):
+        if name in ignoreList:
+            continue
         path = os.path.join(dir,name)
         if os.path.isdir(path):
             dp = depthPath[:]
@@ -243,11 +251,23 @@ def parse():
 
     walkDir(exmlDir,parser,[])
 
+def parseIgnore():
+    global ignoreList
+    global ignoreFile
+    if ignoreFile != "":
+        try:
+            with open(ignoreFile) as f:
+                ignoreList = json.load(f)
+                f.close()
+        except Exception,e:
+            pass
+
 def main(argv):
     global exmlDir
     global tsDir
+    global ignoreFile
     try:
-        opts, args = getopt.getopt(argv, "e:t:", ["exmlDir=", "tsDir="])
+        opts, args = getopt.getopt(argv, "e:t:i:", ["exmlDir=", "tsDir=","ignore="])
     except getopt.GetoptError:
         print "--------------------------------------------"
         print 'usage: python convertPsd.py -e <exmlDir> -t <tsDir>'
@@ -263,11 +283,14 @@ def main(argv):
             exmlDir = os.path.abspath(arg)
         elif opt in ("-t", "--tsDir"):
             tsDir = os.path.abspath(arg)
+        elif opt in ("-i", "--ignore"):
+            ignoreFile = os.path.abspath(arg)
 
     # exmlDir = r"C:\work\N5\roll\client\client\resource\skins"
     # tsDir = r"C:\work\N5\roll\client\client\src\game\view"
 
     try:
+        parseIgnore()
         parse()
     except Exception,e:
         print u"出错咯： " + e.message
