@@ -197,8 +197,7 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
         "x": x,
         "y": y,
         "width": width,
-        "height": height,
-        "touchEnabled": "false"
+        "height": height
     }
     if isButton:
         oldAttrs["anchorOffsetX"] = width * 0.5
