@@ -40,6 +40,11 @@ def getCenterPos(x,y,width,height):
     hh = height * 0.5
     return x+hw,y+hh
 
+#是否被锁定
+def isLayerLocked(layer):
+    assert isinstance(layer,Layer) or isinstance(layer,Group)
+    return layer._info[9][0]
+
 #获得图层或图层组的尺寸信息
 def getDimension(layer):
     assert isinstance(layer, Group) or isinstance(layer, Layer)
