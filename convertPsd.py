@@ -117,11 +117,11 @@ def getImages(psd,depthPath):
     # #生成文字图片
     # if genFontImg:
     #     for layer in psd.layers:
-    #         if isinstance(layer,Group) and hasattr(layer,"name") and layer.name.startswith(r"$Skin"):
+    #         if isinstance(layer,Group) and hasattr(layer,"name") and layer.name.strip().startswith(r"$Skin"):
     #             continue
     #         if isinstance(layer,Layer) and layer.text_data is not None:
-    #             print u"生成文字图片：" + u"txt_{}.png".format(layer.name)
-    #             pngFile = os.path.join(dir,u"txt_{}.png".format(layer.name))
+    #             print u"生成文字图片：" + u"txt_{}.png".format(layer.name.strip())
+    #             pngFile = os.path.join(dir,u"txt_{}.png".format(layer.name.strip()))
     #             if os.path.exists(pngFile):
     #                 os.unlink(pngFile)
     #             layer_image = layer.as_PIL()
@@ -130,6 +130,7 @@ def getImages(psd,depthPath):
 
 #获得图层或图层组的尺寸信息
 def getDimension(layer,isButton=False):
+    #"".strip()
     assert isinstance(layer, Group) or isinstance(layer, Layer)
     try:
         if isinstance(layer,Group):
@@ -140,9 +141,9 @@ def getDimension(layer,isButton=False):
             return box.x1, box.y1, box.width, box.height
         return 0,0,0,0
     except Exception,e:
-        print "--------------------------------------------"
-        print u"解析图层组[ " + layer.name + u" ]错误：  " + e.message
-        print "--------------------------------------------"
+        # print "--------------------------------------------"
+        # print u"解析图层组[ " + layer.name.strip() + u" ]错误：  " + e.message
+        # print "--------------------------------------------"
         return 0,0,0,0
 
 #解析属性 名字：属性名=属性值;属性名=属性值;属性名=属性值
@@ -150,8 +151,8 @@ def getAttrs(layer):
     assert isinstance(layer,Layer) or isinstance(layer,Group)
     ret = {}
     try:
-        if layer.name:
-            lst = layer.name.split(r":")
+        if layer.name.strip():
+            lst = layer.name.strip().split(r":")
             name = lst[0]
             ret["clsName"] = name[1:] if name.startswith(r"$") else name
             if len(lst) > 1:
@@ -165,7 +166,7 @@ def getAttrs(layer):
         else:
             return None
     except Exception,e:
-        print layer.name
+        print layer.name.strip()
         print u"解析名字属性出错： " + e.message
         return None
 
@@ -197,8 +198,7 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
         "x": x,
         "y": y,
         "width": width,
-        "height": height,
-        "touchEnabled": "false"
+        "height": height
     }
     if isButton:
         oldAttrs["anchorOffsetX"] = width * 0.5
@@ -224,7 +224,7 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
 #解析skinGroup
 def parseSkinGroup(group,depth,depthPath,root=False):
     layer = group.layers[0]
-    nm = layer.name
+    nm = layer.name.strip()
     x, y, width, height = getDimension(layer)
 
     otherAttr = {
@@ -242,7 +242,14 @@ def parseCommonGroup(group,depth,depthPath,root=False):
     if attrs is None:
         return
     cls = attrs["clsName"]
-    return genContent(group,r"n:"+cls,None,depth)
+    clz = cls[2:]
+    if cls.startswith(r"e_"):
+        clz = r"e:" + clz
+        return genContent(group,clz,None,depth)
+    elif cls.startswith(r"n_"):
+        clz = r"n:" + clz
+        return genContent(group, clz, None, depth)
+    return ""
 
 #通过id属性获得图层
 def getLayerById(group,id):
@@ -256,7 +263,7 @@ def getLayerById(group,id):
 #获取图层的资源属性
 def getLayerSrc(layer,depthPath):
     assert isinstance(layer,Layer)
-    names = layer.name.split(r":")
+    names = layer.name.strip().split(r":")
     src = r"{}_png".format(names[0])
     if intelligent:
         length = len(depthPath)
@@ -313,14 +320,17 @@ def parseSpecialGroup(group,depth,depthPath,root=False):
         return parseSkinGroup(group, depth, depthPath, root)
     elif cls == "Button":
         return parseButtonGroup(group, depth, depthPath, root)
-    else:
+    elif cls.startswith(r"e_") or cls.startswith(r"n_"):
         return parseCommonGroup(group, depth, depthPath, root)
 
 #解析psd图层组
 def parseGroup(group,depth,depthPath,root=False):
     assert isinstance(group,Group) or isinstance(group,PSDImage)
+    if root == False and isLayerLocked(group):
+        #如果图层组锁定了，就不要解析了
+        return ""
     if hasattr(group,"name"):
-        if root == False and group.name.startswith(r"$"):
+        if root == False and group.name.strip().startswith(r"$"):
             return parseSpecialGroup(group,depth,depthPath,root)
 
 
@@ -346,6 +356,9 @@ def parseGroup(group,depth,depthPath,root=False):
     layers = group.layers
     layers.reverse()
     for layer in layers:
+        if isLayerLocked(layer):
+            #图层被锁定，不解析
+            continue
         if isinstance(layer,Layer):
             content += parseLayer(layer,depth+1,depthPath[:])
         elif isinstance(layer,Group):
@@ -367,7 +380,7 @@ def parseLayer(layer,depth,depthPath):
     content = u""
     prefix = depth * u"    "
     isLabel = True if layer.text_data is not None else False
-    name = layer.name
+    name = layer.name.strip()
     x,y,width,height = getDimension(layer)
     visible = layer.visible
     alpha = 1 if layer.opacity != 255 else layer.opacity / 255
@@ -485,6 +498,15 @@ def parseSingleResource(res):
             resNameMap[res["name"]] = []
             resNameMap[res["name"]].append(None)
 
+def isLayerLocked(layer):
+    assert isinstance(layer,Layer) or isinstance(layer,Group)
+    locked = False
+    try:
+        locked = layer._info[9][0]
+    except:
+        pass
+    return locked
+
 
 #解析default.res.json文件
 def parseResourceFile():
@@ -512,9 +534,12 @@ def parseResourceFile():
 #智能选择图片的最优source，减少drawcall
 def getIntelligentSource(sourceName,parentFolder):
     global resNameMap
+    global currentPsdFile
     try:
         if resNameMap.has_key(sourceName):
             folders = resNameMap[sourceName]
+            if currentPsdFile+"_json" in folders:
+                return currentPsdFile+r"_json."+sourceName
             if parentFolder+"_json" in folders:
                 return parentFolder+r"_json."+sourceName
             elif "common_json" in folders:
@@ -589,6 +614,8 @@ def main2():
 
     print psd
     getAttrs(psd.layers[2])
+    for layer in psd.layers:
+        print isLayerLocked(layer)
 
 if __name__ == '__main__':
     #main2()
