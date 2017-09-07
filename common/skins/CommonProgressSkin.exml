@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<e:Skin class="CommonProgressSkin" width="200" height="22" xmlns:e="http://ns.egret.com/eui" xmlns:w="http://ns.egret.com/wing" xmlns:n="*">
+	<e:Image id="bg" x="0" y="0" width="100%" height="100%" source="new_guide_panel_json.task_bar_bg_png" scale9Grid="8,4,226,14"/>
+	<e:Image id="thumb" x="0" y="0" width="100%" height="100%" source="new_guide_panel_json.task_bar_png" scale9Grid="9,5,223,12"/>
+	<n:CommonBitmapLabel id="labelDisplay" text="1/30" verticalCenter="0" horizontalCenter="0" source="new_guide_panel_json.gold_font_png"  font="gold_font_fnt"/>
+</e:Skin>
