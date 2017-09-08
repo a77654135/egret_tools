@@ -67,6 +67,8 @@ class ExmlHandler( xml.sax.ContentHandler):
                cls = u"eui." + tags[1]
            elif tags[0] == "n":
                cls = tags[1]
+           elif tag == r"tween:TweenGroup":
+               cls = r"egret.tween.TweenGroup"
            if cls != u"":
                cls = u": " + cls
            content += u"    private {}{};".format(id,cls)
