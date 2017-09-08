@@ -34,6 +34,40 @@ def getName(layer):
 def getText(layer):
     return layer.text_data.text if isLabel(layer) else ""
 
+def getLayerStroke(layer):
+    assert isLabel(layer)
+    try:
+        baseEffects = layer._info[13][0][1][2][2]
+        strokeEffect = None
+        for lst in baseEffects:
+            if lst[0] == "FrFX":
+                strokeEffect = lst[1]
+                break
+        if strokeEffect is None:
+            return False,0,""
+        enabled,size,r,g,b = False,0,0,0,0
+        for item in strokeEffect[2]:
+            if item[0].strip() == "enab":
+                enabled = item[1][0]
+            elif item[0].strip() == "Sz":
+                size = item[1][1]
+            elif item[0].strip() == "Clr":
+                colorInfo = item[1][2]
+                r = colorInfo[0][1][0]
+                g = colorInfo[1][1][0]
+                b = colorInfo[2][1][0]
+                r = hex(int(r))[2:]
+                g = hex(int(g))[2:]
+                b = hex(int(b))[2:]
+                r = "0" + r if len(r) < 2 else "" + r
+                g = "0" + g if len(g) < 2 else "" + g
+                b = "0" + b if len(b) < 2 else "" + b
+
+        color = r"0x{}{}{}".format(r, g, b)
+        return enabled, size, color
+    except:
+        return False,0,""
+
 #如果是按钮，设置anchorOffset为中心位置，重新计算x,y坐标
 def getCenterPos(x,y,width,height):
     hw = width * 0.5
