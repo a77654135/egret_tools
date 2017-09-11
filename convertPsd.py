@@ -480,6 +480,59 @@ def parse():
             if ext == "psd":
                 parsePsd(f,[])
 
+def getLayerStroke(layer):
+    assert isinstance(layer,Layer) and layer.text_data is not None
+
+    try:
+        baseEffects = layer._info[13][0][1][2][2]
+        strokeEffect = None
+        for lst in baseEffects:
+            if lst[0] == "FrFX":
+                strokeEffect = lst[1]
+                break
+        if strokeEffect is None:
+            return False,0,""
+        enabled,size,r,g,b = False,0,0,0,0
+        for item in strokeEffect[2]:
+            if item[0].strip() == "enab":
+                enabled = item[1][0]
+            elif item[0].strip() == "Sz":
+                size = item[1][1]
+            elif item[0].strip() == "Clr":
+                colorInfo = item[1][2]
+                r = colorInfo[0][1][0]
+                g = colorInfo[1][1][0]
+                b = colorInfo[2][1][0]
+                r = hex(int(r))[2:]
+                g = hex(int(g))[2:]
+                b = hex(int(b))[2:]
+                r = "0" + r if len(r) < 2 else "" + r
+                g = "0" + g if len(g) < 2 else "" + g
+                b = "0" + b if len(b) < 2 else "" + b
+
+        color = r"0x{}{}{}".format(r, g, b)
+        return enabled, size, color
+    except:
+        return False,0,""
+
+
+    # strokeInfo = layer._info[13][0][1][2][2][2][1][2]
+    # enabled = strokeInfo[0][1][0]
+    # size = strokeInfo[5][1][1]
+    # colorInfo = strokeInfo[6][1][2]
+    # r = colorInfo[0][1][0]
+    # g = colorInfo[1][1][0]
+    # b = colorInfo[2][1][0]
+    # r = hex(int(r))[2:]
+    # g = hex(int(g))[2:]
+    # b = hex(int(b))[2:]
+    # r = "0" + r if len(r) < 2 else "" + r
+    # g = "0" + g if len(g) < 2 else "" + g
+    # b = "0" + b if len(b) < 2 else "" + b
+    #
+    # color = r"0x{}{}{}".format(r,g,b)
+    # return enabled, size, color
+
 #解析组员组中的一个资源
 def parseSingleResource(res):
     global resNameMap
@@ -612,11 +665,13 @@ def main2():
     '''
     psd = PSDImage.load(r'C:\work\N5\roll\psd\test.psd')
 
+    print getLayerStroke(psd.layers[4])
+
     print psd
-    getAttrs(psd.layers[2])
-    for layer in psd.layers:
-        print isLayerLocked(layer)
+    # getAttrs(psd.layers[2])
+    # for layer in psd.layers:
+    #     print isLayerLocked(layer)
 
 if __name__ == '__main__':
-    #main2()
-    main(sys.argv[1:])
+    main2()
+    #main(sys.argv[1:])
