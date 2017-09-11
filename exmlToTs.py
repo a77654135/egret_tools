@@ -303,7 +303,7 @@ def main(argv):
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'usage: python convertPsd.py -e <exmlDir> -t <tsDir>'
+            print 'usage: python convertPsd.py -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-e", "--exmlDir"):
