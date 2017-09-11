@@ -17,6 +17,8 @@ dstDir = ""
 dstFile = ""
 ignoreFile = ""
 ignoreList = []
+expectedFile = ""
+
 
 
 class ExmlHandler( xml.sax.ContentHandler):
@@ -211,9 +213,10 @@ def getNameAndExt(fileName):
 
 def walkDir(dir,parser,depthPath):
     global ignoreList
+    global expectedFile
 
     for name in os.listdir(dir):
-        if name in ignoreList:
+        if expectedFile == "" and name in ignoreList:
             continue
         path = os.path.join(dir,name)
         if os.path.isdir(path):
@@ -221,6 +224,8 @@ def walkDir(dir,parser,depthPath):
             dp.append(name)
             walkDir(path,parser,dp)
         else:
+            if expectedFile != "" and name != expectedFile:
+                continue
             nm,ext = getNameAndExt(name)
             if ext == "exml":
                 #parser.parse(path)
@@ -268,11 +273,12 @@ def main(argv):
     global exmlDir
     global tsDir
     global ignoreFile
+    global expectedFile
     try:
-        opts, args = getopt.getopt(argv, "e:t:i:", ["exmlDir=", "tsDir=","ignore="])
+        opts, args = getopt.getopt(argv, "e:t:i:", ["exmlDir=", "tsDir=","ignore=","expectedFile="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'usage: python convertPsd.py -e <exmlDir> -t <tsDir>'
+        print 'usage: python convertPsd.py -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
@@ -287,6 +293,8 @@ def main(argv):
             tsDir = os.path.abspath(arg)
         elif opt in ("-i", "--ignore"):
             ignoreFile = os.path.abspath(arg)
+        elif opt in ("--expectedFile",):
+            expectedFile = arg
 
     # exmlDir = r"C:\work\N5\roll\client\client\resource\skins"
     # tsDir = r"C:\work\N5\roll\client\client\src\game\view"
