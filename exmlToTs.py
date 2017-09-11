@@ -21,6 +21,7 @@ expectedFile = ""
 
 
 
+
 class ExmlHandler( xml.sax.ContentHandler):
    def __init__(self):
        self.content = ""
@@ -28,6 +29,8 @@ class ExmlHandler( xml.sax.ContentHandler):
        self.ids = []
        self.buttonNames = []
        self.hasButton = False
+       self.hasTween = False
+       self.tweenIds = []
 
    # 元素开始事件处理
    def startElement(self, tag, attributes):
@@ -37,6 +40,8 @@ class ExmlHandler( xml.sax.ContentHandler):
            self.ids = []
            self.buttonNames = []
            self.hasButton = False
+           self.hasTween = False
+           self.tweenIds = []
 
            className = attributes.getValue("class")
            self.tsName = className.replace("Skin","")
@@ -71,6 +76,8 @@ class ExmlHandler( xml.sax.ContentHandler):
                cls = tags[1]
            elif tag == r"tween:TweenGroup":
                cls = r"egret.tween.TweenGroup"
+               self.hasTween = True
+               self.tweenIds.append(id)
            if cls != u"":
                cls = u": " + cls
            content += u"    private {}{};".format(id,cls)
@@ -102,6 +109,16 @@ class ExmlHandler( xml.sax.ContentHandler):
            content += u"\n"
 
        return content
+
+   def getTweenContent(self):
+       if self.hasTween:
+           content = u""
+           for id in self.tweenIds:
+               content += u"        this.{}.stop();\n".format(id)
+           return content
+       else:
+           return u""
+
 
    def getContent(self,hasButton):
        content = u""
@@ -138,6 +155,7 @@ class ExmlHandler( xml.sax.ContentHandler):
            content += u"        }\n"
            content += u"        this.disposed = true;\n"
            content += u"\n"
+           content += self.getTweenContent()
            content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
            content += u"        if(this.parent){\n"
            content += u"            this.parent.removeChild(this);\n"
@@ -174,6 +192,7 @@ class ExmlHandler( xml.sax.ContentHandler):
            content += u"        }\n"
            content += u"        this.disposed = true;\n"
            content += u"\n"
+           content += self.getTweenContent()
            content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
            content += u"        this.removeEventListener(egret.TouchEvent.TOUCH_TAP,this.onClick,this);\n"
            content += u"        if(this.parent){\n"
