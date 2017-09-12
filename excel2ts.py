@@ -150,6 +150,9 @@ def main(argv):
     # tsDir = r"C:\work\N5\roll\client\client\src\game\view"
 
     try:
+        os.chdir(excelDir)
+        os.system(r"svn revert -R .")
+        os.system(r"svn update .")
         parse()
     except Exception,e:
         print u"出错咯： " + e.message
