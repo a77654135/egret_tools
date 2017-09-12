@@ -112,7 +112,14 @@ def parse():
     for f in os.listdir(excelDir):
         name,ext = getNameAndExt(f)
         if ext == "xlsx":
-            fileContent += parseXlsx(f)
+            try:
+                fileContent += parseXlsx(f)
+            except Exception,e:
+                fileContent += u""
+                print "...................................................."
+                print u"解析文件出错： " + f
+                print e.message
+                print "...................................................."
 
     fileContent += u"}"
     dir = os.path.dirname(tsFile)
