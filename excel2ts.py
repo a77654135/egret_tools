@@ -34,6 +34,22 @@ def getLx(col):
         return "string"
     return "any"
 
+def is_chinese(uchar):
+    """判断一个unicode是否是汉字"""
+    if uchar >= u'\u4e00' and uchar <= u'\u9fa5':
+        return True
+    else:
+        return False
+
+#名字中是否含有中文
+def nameExistChinese(name):
+    ret = False
+    for n in name:
+        if is_chinese(n):
+            ret = True
+            break
+    return ret
+
 
 #fileName:  basedata.xlsx
 def parseXlsx(fileName):
@@ -110,16 +126,20 @@ def parse():
     fileContent += u"declare namespace ConfigData{\n"
 
     for f in os.listdir(excelDir):
+        if os.path.isdir(os.path.join(excelDir,f)):
+            continue
         name,ext = getNameAndExt(f)
-        if ext == "xlsx":
-            try:
-                fileContent += parseXlsx(f)
-            except Exception,e:
-                fileContent += u""
-                print "...................................................."
-                print u"解析文件出错： " + f
-                print e.message
-                print "...................................................."
+        if ext != "xlsx" or nameExistChinese(name):
+            continue
+        try:
+            fileContent += parseXlsx(f)
+        except Exception, e:
+            fileContent += u""
+            print "...................................................."
+            print u"解析文件出错： " + f
+            print e.message
+            print "...................................................."
+
 
     fileContent += u"}"
     dir = os.path.dirname(tsFile)
@@ -139,13 +159,13 @@ def main(argv):
         opts, args = getopt.getopt(argv, "e:t:", ["excelDir=", "tsFile="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'usage: python convertPsd.py -e <excelDir> -t <tsFile> '
+        print 'convertPsd -e <excelDir> -t <tsFile> '
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'usage: python convertPsd.py -e <excelDir> -t <tsFile> '
+            print 'convertPsd -e <excelDir> -t <tsFile> '
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-e", "--excelDir"):
