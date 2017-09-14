@@ -106,13 +106,13 @@ def main(argv):
         opts, args = getopt.getopt(argv, "i:s:c:", ["imgDir=", "span=","spanCount="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'usage: python convertPsd.py -i <imgDir> -s <span> -c <spanCount>'
+        print 'convertPsd -i <imgDir> -s <span> -c <spanCount>'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'usage: python convertPsd.py -i <imgDir> -s <span> -c <spanCount>'
+            print 'convertPsd -i <imgDir> -s <span> -c <spanCount>'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-s", "--span"):

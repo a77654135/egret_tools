@@ -297,13 +297,13 @@ def main(argv):
         opts, args = getopt.getopt(argv, "e:t:i:", ["exmlDir=", "tsDir=","ignore=","expectedFile="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'usage: python convertPsd.py -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
+        print 'convertPsd -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'usage: python convertPsd.py -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
+            print 'convertPsd -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-e", "--exmlDir"):

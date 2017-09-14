@@ -627,13 +627,13 @@ def main(argv):
         opts, args = getopt.getopt(argv, "p:i:s:r:", ["psdDir=", "imgDir=","skinDir=","genImg","genFontImg","resFile=","intelligent","force"])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg --genFontImg   -r resFile --intelligent --force'
+        print 'convertPsd -p <psdDir> -s <skinDir>    -i <imgDir> --genImg --genFontImg   -r resFile --intelligent --force'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'usage python convertPsd.py -p <psdDir> -s <skinDir>    -i <imgDir> --genImg --genFontImg   -r resFile --intelligent --force'
+            print 'convertPsd -p <psdDir> -s <skinDir>    -i <imgDir> --genImg --genFontImg   -r resFile --intelligent --force'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-p", "--psdDir"):
