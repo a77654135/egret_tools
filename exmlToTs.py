@@ -88,8 +88,8 @@ class ExmlHandler( xml.sax.ContentHandler):
        content = u""
 
        content += u"    private onClick(e: egret.TouchEvent) {\n"
-       content += u"        var target = e.target;\n"
-       content += u"        var name = target.name;\n"
+       content += u"        var name = e.target.name;\n"
+       #content += u"        var name = target.name;\n"
        content += u"        switch(name) {\n"
 
        for name in self.buttonNames:
