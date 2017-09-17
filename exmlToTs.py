@@ -87,10 +87,10 @@ class ExmlHandler( xml.sax.ContentHandler):
    def getIdEvents(self):
        content = u""
 
-       content += u"    private onClick(e: egret.TouchEvent){\n"
-       content += u"        var target = e.target;\n"
-       content += u"        var name = target.name;\n"
-       content += u"        switch(name){\n"
+       content += u"    private onClick(e: egret.TouchEvent) {\n"
+       content += u"        var name = e.target.name;\n"
+       #content += u"        var name = target.name;\n"
+       content += u"        switch(name) {\n"
 
        for name in self.buttonNames:
            content += u'            case "%s":\n' % name
@@ -102,7 +102,7 @@ class ExmlHandler( xml.sax.ContentHandler):
        content += u"\n"
 
        for name in self.buttonNames:
-           content += u"    private on%sClick(){\n" % name.capitalize()
+           content += u"    private on%sClick() {\n" % name.capitalize()
            content += u"\n"
            content += u"    }\n"
 
@@ -128,19 +128,19 @@ class ExmlHandler( xml.sax.ContentHandler):
        content += u"*/\n"
 
        if not hasButton:
-           content += u"class %s extends eui.Component{" % self.tsName
+           content += u"class %s extends eui.Component {" % self.tsName
            content += u"\n"
            content += u"    private disposed: boolean = false;\n"
            content += self.getIdContent()
            content += u"\n"
            content += u""
-           content += u"    public constructor(){\n"
+           content += u"    public constructor() {\n"
            content += u"        super();\n"
            content += u"        this.skinName = %sSkin;\n" % self.tsName
            content += u"        this.init();\n"
            content += u"    }\n"
            content += u"\n"
-           content += u"    public init(){\n"
+           content += u"    public init() {\n"
            content += u"        this.disposed = false;\n"
            content += u"        this.addEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
            content += u"    }\n"
@@ -149,31 +149,31 @@ class ExmlHandler( xml.sax.ContentHandler):
            content += u"    * 清理资源\n"
            content += u"    * 手动调用或者从显示列表移除时自动调用\n"
            content += u"    */\n"
-           content += u"    public dispose(){\n"
-           content += u"        if(this.disposed){\n"
+           content += u"    public dispose() {\n"
+           content += u"        if (this.disposed) {\n"
            content += u"            return;\n"
            content += u"        }\n"
            content += u"        this.disposed = true;\n"
            content += u"\n"
            content += self.getTweenContent()
            content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
-           content += u"        if(this.parent){\n"
+           content += u"        if (this.parent) {\n"
            content += u"            this.parent.removeChild(this);\n"
            content += u"        }\n"
            content += u"    }\n"
            content += u"}\n"
        else:
-           content += u"class %s extends eui.Component{\n" % self.tsName
+           content += u"class %s extends eui.Component {\n" % self.tsName
            content += u"    private disposed: boolean = false;\n"
            content += self.getIdContent()
            content += u"\n"
-           content += u"    public constructor(){\n"
+           content += u"    public constructor() {\n"
            content += u"        super();\n"
            content += u"        this.skinName = %sSkin;\n" % self.tsName
            content += u"        this.init();\n"
            content += u"    }\n"
            content += u"\n"
-           content += u"    public init(){\n"
+           content += u"    public init() {\n"
            content += u"        this.disposed = false;\n"
            content += u"        this.addEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
            content += u"        this.addEventListener(egret.TouchEvent.TOUCH_TAP,this.onClick,this);\n"
@@ -186,8 +186,8 @@ class ExmlHandler( xml.sax.ContentHandler):
            content += u"    * 清理资源\n"
            content += u"    * 手动调用或者从显示列表移除时自动调用\n"
            content += u"    */\n"
-           content += u"    public dispose(){\n"
-           content += u"        if(this.disposed){\n"
+           content += u"    public dispose() {\n"
+           content += u"        if (this.disposed) {\n"
            content += u"            return;\n"
            content += u"        }\n"
            content += u"        this.disposed = true;\n"
@@ -195,7 +195,7 @@ class ExmlHandler( xml.sax.ContentHandler):
            content += self.getTweenContent()
            content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
            content += u"        this.removeEventListener(egret.TouchEvent.TOUCH_TAP,this.onClick,this);\n"
-           content += u"        if(this.parent){\n"
+           content += u"        if (this.parent) {\n"
            content += u"            this.parent.removeChild(this);\n"
            content += u"        }\n"
            content += u"    }\n"
@@ -297,13 +297,13 @@ def main(argv):
         opts, args = getopt.getopt(argv, "e:t:i:", ["exmlDir=", "tsDir=","ignore=","expectedFile="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'usage: python convertPsd.py -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
+        print 'convertPsd -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'usage: python convertPsd.py -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
+            print 'convertPsd -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-e", "--exmlDir"):

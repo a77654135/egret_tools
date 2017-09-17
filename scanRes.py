@@ -66,12 +66,12 @@ class Scanner:
         try:
             opts,args = getopt.getopt(self.argv,"hd:o:s:",["dir=","outputFile=","scanDirName="])
         except getopt.GetoptError:
-            print "Usage: scanRes.py -d resDir -o outputFile -s scanDirName"
+            print "scanRes -d resDir -o outputFile -s scanDirName"
             sys.exit(2)
 
         for k,v in opts:
             if k in ("-h","--help"):
-                print "Usage: scanRes.py -d resDir -o outputFile -s scanDirName"
+                print "scanRes -d resDir -o outputFile -s scanDirName"
                 sys.exit(2)
             elif k in ("-d","--dir"):
                 self.resDir = os.path.abspath(v)

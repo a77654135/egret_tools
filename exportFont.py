@@ -126,13 +126,13 @@ def main(argv):
         opts, args = getopt.getopt(argv, "p:f:", ["psDir=", "fontDir="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'usage python convertPsd.py -p <psDir> -f <fontDir>'
+        print 'convertPsd -p <psDir> -f <fontDir>'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'usage python convertPsd.py -p <psDir> -f <fontDir>'
+            print 'convertPsd -p <psDir> -f <fontDir>'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-p", "--psDir"):

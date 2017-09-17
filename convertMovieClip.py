@@ -49,13 +49,13 @@ def main(argv):
         opts, args = getopt.getopt(argv, "f:d:", ["flashDir=", "dstDir=","force="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'usage: python convertPsd.py -f <flashDir> -d <dstDir> --force'
+        print 'convertPsd -f <flashDir> -d <dstDir> --force'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'usage: python convertPsd.py -f <flashDir> -d <dstDir> --force'
+            print 'convertPsd -f <flashDir> -d <dstDir> --force'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-f", "--flashDir"):

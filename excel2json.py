@@ -78,13 +78,13 @@ def main(argv):
         opts, args = getopt.getopt(argv, "e:j:", ["excelDir=", "jsonDir="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'usage: python convertPsd.py -e <excelDir> -j <jsonDir> '
+        print 'convertPsd -e <excelDir> -j <jsonDir> '
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'usage: python convertPsd.py -e <excelDir> -j <jsonDir> '
+            print 'convertPsd -e <excelDir> -j <jsonDir> '
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-e", "--excelDir"):
