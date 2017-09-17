@@ -663,9 +663,9 @@ def main2():
     not use, for debug
     :return:
     '''
-    psd = PSDImage.load(r'C:\work\N5\roll\psd\test.psd')
+    psd = PSDImage.load(r'C:\Users\Administrator\Desktop\test.psd')
 
-    print getLayerStroke(psd.layers[4])
+    #print getLayerStroke(psd.layers[4])
 
     print psd
     # getAttrs(psd.layers[2])
