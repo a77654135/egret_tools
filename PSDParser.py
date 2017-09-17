@@ -5,6 +5,7 @@
 # email: talus_wang@sina.com
 
 import os
+import re
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -18,6 +19,14 @@ def getNameAndExt(fileName):
     name = r".".join(list[0:length-1])
     return name,ext
 
+def rgbToHex(r,g,b):
+    r = hex(int(r))[2:]
+    g = hex(int(g))[2:]
+    b = hex(int(b))[2:]
+    r = "0" + r if len(r) < 2 else "" + r
+    g = "0" + g if len(g) < 2 else "" + g
+    b = "0" + b if len(b) < 2 else "" + b
+    return r"0x{}{}{}".format(r, g, b)
 
 def isImage(layer):
     return isinstance(layer,Layer) and layer.text_data is None
@@ -149,4 +158,94 @@ def getLabels(group):
         else:
             continue
 
+def getLabelInfo(label):
+    assert isLabel(label)
+    info = None
+    try:
+        info = label._tagged_blocks["TySh"][9][2][5][1]["EngineDict"]["StyleRun"]["RunArray"][0]["StyleSheet"]["StyleSheetData"]
+    except Exception,e:
+        print "getLabelInfo error:  " + e.message
+    return info
+
+def getLabelSize(label):
+    assert isLabel(label)
+    info = getLabelInfo(label)
+    if info is not None:
+        return info["FontSize"]
+    return 0
+
+def getLabelColor(label):
+    assert isLabel(label)
+    info = getLabelInfo(label)
+    if info is not None:
+        colorInfo = info["FillColor"]["Values"]
+        a,r,g,b = colorInfo[0],colorInfo[1],colorInfo[2],colorInfo[3]
+    else:
+        a,r,g,b = 1,0,0,0
+    return rgbToHex(round(r*255),round(g*255),round(b*255)),a
+
+def getLabelFontFamily(label):
+    assert isLabel(label)
+    try:
+        dr = label._tagged_blocks["TySh"][9][2][5][1]["DocumentResources"]
+        fontName = dr["FontSet"][0]["Name"]
+        return fontName.split(r"-")[0]
+    except Exception,e:
+        print "getLabelFontFamily  error:  " + e.message
+        return "MicrosoftYaHei"
+
+def getLabelBold(label):
+    assert isLabel(label)
+    try:
+        dr = label._tagged_blocks["TySh"][9][2][5][1]["DocumentResources"]
+        fontName = dr["FontSet"][0]["Name"]
+        bi = fontName.split(r"-")[1]
+        return re.match(r".*Bold.*",bi) is not None
+    except Exception,e:
+        #print "getLabelBold  error:  " + e.message
+        return False
+
+def getLabelItalic(label):
+    assert isLabel(label)
+    try:
+        dr = label._tagged_blocks["TySh"][9][2][5][1]["DocumentResources"]
+        fontName = dr["FontSet"][0]["Name"]
+        bi = fontName.split(r"-")[1]
+        return re.match(r".*Italic.*", bi) is not None
+    except Exception, e:
+        #print "getLabelItalic  error:  " + e.message
+        return False
+
+def getLabelStrokeInfo(label):
+    assert isLabel(label)
+    try:
+        info = label._tagged_blocks["lfx2"][2][2]
+        for item in info:
+            if item[0] == "FrFX":
+                strokeInfo = item[1][2]
+                enabled = strokeInfo[0][1][0]
+                size = strokeInfo[5][1][1]
+                clr = strokeInfo[6][1][2]
+                r,g,b = clr[0][1][0],clr[1][1][0],clr[2][1][0]
+                #print enabled,size,r
+                return enabled,size,rgbToHex(round(r),round(g),round(b))
+        return False,0,"0x000000"
+    except Exception,e:
+        print "getLabelStrokeInfo error:  " + e.message
+        return False,0,"0x000000"
+
+
+
+def main():
+    psd = PSDImage.load(r'C:\Users\Administrator\Desktop\test.psd')
+    for layer in psd.layers:
+        if isLabel(layer):
+            print getLabelSize(layer)
+            print getLabelColor(layer)
+            print getLabelBold(layer)
+            print getLabelItalic(layer)
+            print getLabelStrokeInfo(layer)
+
+if __name__ == '__main__':
+    main()
 
