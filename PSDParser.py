@@ -172,17 +172,20 @@ def getLabelSize(label):
     info = getLabelInfo(label)
     if info is not None:
         return info["FontSize"]
-    return 0
+    return 18
 
 def getLabelColor(label):
-    assert isLabel(label)
-    info = getLabelInfo(label)
-    if info is not None:
-        colorInfo = info["FillColor"]["Values"]
-        a,r,g,b = colorInfo[0],colorInfo[1],colorInfo[2],colorInfo[3]
-    else:
-        a,r,g,b = 1,0,0,0
-    return rgbToHex(round(r*255),round(g*255),round(b*255)),a
+    try:
+        assert isLabel(label)
+        info = getLabelInfo(label)
+        if info is not None:
+            colorInfo = info["FillColor"]["Values"]
+            a,r,g,b = colorInfo[0],colorInfo[1],colorInfo[2],colorInfo[3]
+        else:
+            a,r,g,b = 1,0,0,0
+        return rgbToHex(round(r*255),round(g*255),round(b*255)),a
+    except:
+        return "0x000000",1
 
 def getLabelFontFamily(label):
     assert isLabel(label)

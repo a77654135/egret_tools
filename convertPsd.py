@@ -10,6 +10,7 @@ sys.setdefaultencoding('utf-8')
 import getopt
 import json
 from psd_tools import PSDImage,Group,Layer
+from PSDParser import getLabelStrokeInfo,getLabelBold,getLabelItalic,getLabelSize,getLabelColor
 
 psdDir = ""
 imgDir = ""
@@ -322,6 +323,8 @@ def parseSpecialGroup(group,depth,depthPath,root=False):
         return parseButtonGroup(group, depth, depthPath, root)
     elif cls.startswith(r"e_") or cls.startswith(r"n_"):
         return parseCommonGroup(group, depth, depthPath, root)
+    else:
+        return ""
 
 #解析psd图层组
 def parseGroup(group,depth,depthPath,root=False):
@@ -330,8 +333,10 @@ def parseGroup(group,depth,depthPath,root=False):
         #如果图层组锁定了，就不要解析了
         return ""
     if hasattr(group,"name"):
-        if root == False and group.name.strip().startswith(r"$"):
-            return parseSpecialGroup(group,depth,depthPath,root)
+        print "111111"
+        if group.name.strip().startswith(r"$"):
+            print "22222222"
+            return parseSpecialGroup(group,depth,depthPath)
 
 
     content = u""
@@ -362,6 +367,8 @@ def parseGroup(group,depth,depthPath,root=False):
         if isinstance(layer,Layer):
             content += parseLayer(layer,depth+1,depthPath[:])
         elif isinstance(layer,Group):
+            print root
+            print layer.name
             content += parseGroup(layer,depth+1,depthPath[:])
     if root == False:
         content += u'{}</e:Group>'.format(prefix)
@@ -399,6 +406,19 @@ def parseLayer(layer,depth,depthPath):
     if isLabel:
         oldAttrs["fontFamily"] = "Microsoft YaHei"
         oldAttrs["text"] = layer.text_data.text
+        se,sz,sc = getLabelStrokeInfo(layer)
+        if se:
+            oldAttrs["stroke"] = sz
+            oldAttrs["strokeColor"] = sc
+        if getLabelBold(layer):
+            oldAttrs["bold"] = "true"
+        if getLabelItalic(layer):
+            oldAttrs["italic"] = "true"
+        oldAttrs["size"] = getLabelSize(layer)
+        color,alpha = getLabelColor(layer)
+        oldAttrs["textColor"] = color
+        if alpha != 1:
+            oldAttrs["alpha"] = alpha
     else:
         src = r"{}_png".format(name)
         if intelligent:
@@ -479,59 +499,6 @@ def parse():
             name, ext = getNameAndExt(f)
             if ext == "psd":
                 parsePsd(f,[])
-
-def getLayerStroke(layer):
-    assert isinstance(layer,Layer) and layer.text_data is not None
-
-    try:
-        baseEffects = layer._info[13][0][1][2][2]
-        strokeEffect = None
-        for lst in baseEffects:
-            if lst[0] == "FrFX":
-                strokeEffect = lst[1]
-                break
-        if strokeEffect is None:
-            return False,0,""
-        enabled,size,r,g,b = False,0,0,0,0
-        for item in strokeEffect[2]:
-            if item[0].strip() == "enab":
-                enabled = item[1][0]
-            elif item[0].strip() == "Sz":
-                size = item[1][1]
-            elif item[0].strip() == "Clr":
-                colorInfo = item[1][2]
-                r = colorInfo[0][1][0]
-                g = colorInfo[1][1][0]
-                b = colorInfo[2][1][0]
-                r = hex(int(r))[2:]
-                g = hex(int(g))[2:]
-                b = hex(int(b))[2:]
-                r = "0" + r if len(r) < 2 else "" + r
-                g = "0" + g if len(g) < 2 else "" + g
-                b = "0" + b if len(b) < 2 else "" + b
-
-        color = r"0x{}{}{}".format(r, g, b)
-        return enabled, size, color
-    except:
-        return False,0,""
-
-
-    # strokeInfo = layer._info[13][0][1][2][2][2][1][2]
-    # enabled = strokeInfo[0][1][0]
-    # size = strokeInfo[5][1][1]
-    # colorInfo = strokeInfo[6][1][2]
-    # r = colorInfo[0][1][0]
-    # g = colorInfo[1][1][0]
-    # b = colorInfo[2][1][0]
-    # r = hex(int(r))[2:]
-    # g = hex(int(g))[2:]
-    # b = hex(int(b))[2:]
-    # r = "0" + r if len(r) < 2 else "" + r
-    # g = "0" + g if len(g) < 2 else "" + g
-    # b = "0" + b if len(b) < 2 else "" + b
-    #
-    # color = r"0x{}{}{}".format(r,g,b)
-    # return enabled, size, color
 
 #解析组员组中的一个资源
 def parseSingleResource(res):
@@ -623,6 +590,7 @@ def main(argv):
     global intelligent
     global force
     global genFontImg
+    global currentPsdFile
     try:
         opts, args = getopt.getopt(argv, "p:i:s:r:", ["psdDir=", "imgDir=","skinDir=","genImg","genFontImg","resFile=","intelligent","force"])
     except getopt.GetoptError:
@@ -656,22 +624,29 @@ def main(argv):
     #psdDir = r"C:\work\N5\roll\psd"
     if intelligent:
         parseResourceFile()
-    parse()
+    try:
+        parse()
+    except Exception,e:
+        print u"解析psd失败：" + currentPsdFile
+        print e.message
 
 def main2():
     '''
     not use, for debug
     :return:
     '''
-    psd = PSDImage.load(r'C:\Users\Administrator\Desktop\test.psd')
+    #psd = PSDImage.load(r'C:\Users\Administrator\Desktop\test.psd')
 
     #print getLayerStroke(psd.layers[4])
-
-    print psd
+    global absPsdDir
+    dir = r"E:\study\code\EgretProjects\psd\common"
+    absPsdDir = os.path.abspath(dir)
+    parseDir([])
+    #print psd
     # getAttrs(psd.layers[2])
     # for layer in psd.layers:
     #     print isLayerLocked(layer)
 
 if __name__ == '__main__':
-    main2()
-    #main(sys.argv[1:])
+    #main2()
+    main(sys.argv[1:])
