@@ -333,9 +333,7 @@ def parseGroup(group,depth,depthPath,root=False):
         #如果图层组锁定了，就不要解析了
         return ""
     if hasattr(group,"name"):
-        print "111111"
         if group.name.strip().startswith(r"$"):
-            print "22222222"
             return parseSpecialGroup(group,depth,depthPath)
 
 
@@ -367,8 +365,6 @@ def parseGroup(group,depth,depthPath,root=False):
         if isinstance(layer,Layer):
             content += parseLayer(layer,depth+1,depthPath[:])
         elif isinstance(layer,Group):
-            print root
-            print layer.name
             content += parseGroup(layer,depth+1,depthPath[:])
     if root == False:
         content += u'{}</e:Group>'.format(prefix)
@@ -635,14 +631,14 @@ def main2():
     not use, for debug
     :return:
     '''
-    #psd = PSDImage.load(r'C:\Users\Administrator\Desktop\test.psd')
+    psd = PSDImage.load(r'E:\study\code\EgretProjects\psd\common\test1.psd')
 
     #print getLayerStroke(psd.layers[4])
-    global absPsdDir
-    dir = r"E:\study\code\EgretProjects\psd\common"
-    absPsdDir = os.path.abspath(dir)
-    parseDir([])
-    #print psd
+    # global absPsdDir
+    # dir = r"E:\study\code\EgretProjects\psd\common"
+    # absPsdDir = os.path.abspath(dir)
+    # parseDir([])
+    print psd
     # getAttrs(psd.layers[2])
     # for layer in psd.layers:
     #     print isLayerLocked(layer)
