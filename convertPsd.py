@@ -138,7 +138,8 @@ def getDimension(layer,isButton=False):
             box = layer.bbox
             return box.x1, box.y1, box.width, box.height
         elif isinstance(layer,Layer):
-            box = layer.transform_bbox if layer.transform_bbox is not None else layer.bbox
+            #box = layer.transform_bbox if layer.transform_bbox is not None else layer.bbox
+            box = layer.bbox
             return box.x1, box.y1, box.width, box.height
         return 0,0,0,0
     except Exception,e:
@@ -298,8 +299,10 @@ def parseButtonGroup(group,depth,depthPath,root=False):
         src = getLayerSrc(layer,depthPath)
         otherAttr["bgSource"] = src
     elif length > 1:
-        bgLayer = getLayerById(group,"bg")
-        iconLayer = getLayerById(group,"icon")
+        #bgLayer = getLayerById(group,"bg")
+        #iconLayer = getLayerById(group,"icon")
+        bgLayer = group.layers[1]
+        iconLayer = group.layers[0]
         if bgLayer is not None and iconLayer is not None:
             otherAttr["skinName"] = "IconButtonSkin"
         if bgLayer is not None:
@@ -646,5 +649,5 @@ def main2():
     #     print isLayerLocked(layer)
 
 if __name__ == '__main__':
-    main2()
-    #main(sys.argv[1:])
+    #main2()
+    main(sys.argv[1:])
