@@ -221,14 +221,12 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
             content += u'{0}="{1}" '.format(k, v)
         content += u">\n";
 
-        content += u"{}<e:skinName>\n".format(prefix*2)
-        content += u'{}<e:Skin states="up,down,disabled">\n'.format(prefix*3)
+        content += u"{}<e:skinName><e:Skin>\n".format(prefix*2)
         if otherAttr.has_key("bgSource"):
             content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}"/>\n'.format(prefix*3,"bg",otherAttr["bgSource"])
         if otherAttr.has_key("iconSource"):
             content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}"/>\n'.format(prefix*3,"icon",otherAttr["iconSource"])
-        content += u'{}</e:Skin>\n'.format(prefix*3)
-        content += u"{}</e:skinName>\n".format(prefix * 2)
+        content += u'{}</e:Skin></e:skinName>\n'.format(prefix*2)
         content += u"{}</{}>".format(prefix,clz)
     else:
         content += u"{0}<{1} ".format(prefix, clz)
