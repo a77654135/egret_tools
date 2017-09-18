@@ -162,7 +162,9 @@ def getLabelInfo(label):
     assert isLabel(label)
     info = None
     try:
+        #ps的版本不一样。。。。家中电脑的版本
         info = label._tagged_blocks["TySh"][9][2][5][1]["EngineDict"]["StyleRun"]["RunArray"][0]["StyleSheet"]["StyleSheetData"]
+        #info = label._tagged_blocks["lfx2"]
     except Exception,e:
         print "getLabelInfo error:  " + e.message
     return info
@@ -222,25 +224,49 @@ def getLabelItalic(label):
 def getLabelStrokeInfo(label):
     assert isLabel(label)
     try:
+        #家里ps的版本
+
+        # info = label._tagged_blocks["lfx2"][2][2]
+        # for item in info:
+        #     if item[0] == "FrFX":
+        #         strokeInfo = item[1][2]
+        #         enabled = strokeInfo[0][1][0]
+        #         size = strokeInfo[5][1][1]
+        #         clr = strokeInfo[6][1][2]
+        #         r,g,b = clr[0][1][0],clr[1][1][0],clr[2][1][0]
+        #         #print enabled,size,r
+        #         return enabled,size,rgbToHex(round(r),round(g),round(b))
+        # return False,0,"0x000000"
+
+        #公司的ps版本
         info = label._tagged_blocks["lfx2"][2][2]
         for item in info:
             if item[0] == "FrFX":
-                strokeInfo = item[1][2]
-                enabled = strokeInfo[0][1][0]
-                size = strokeInfo[5][1][1]
-                clr = strokeInfo[6][1][2]
-                r,g,b = clr[0][1][0],clr[1][1][0],clr[2][1][0]
-                #print enabled,size,r
-                return enabled,size,rgbToHex(round(r),round(g),round(b))
-        return False,0,"0x000000"
+                frfx = item[1][2]
+                enabled = getListTupleAttr(frfx,"enab")[0] if getListTupleAttr(frfx,"enab") is not None else False
+                size = getListTupleAttr(frfx,"Sz")[1] if getListTupleAttr(frfx,"Sz") is not None else 0
+                clr = getListTupleAttr(frfx,"Clr")[2]
+                if clr is not None:
+                    r, g, b = clr[0][1][0], clr[1][1][0], clr[2][1][0]
+                else:
+                    r,g,b, = 0,0,0
+                return enabled, size, rgbToHex(round(r), round(g), round(b))
+        return False, 0, "0x000000"
+
     except Exception,e:
         print "getLabelStrokeInfo error:  " + e.message
         return False,0,"0x000000"
 
 
+def getListTupleAttr(lst,key):
+    for l in lst:
+        if l[0].strip() == key:
+            return l[1]
+    return None
+
 
 def main():
-    psd = PSDImage.load(r'C:\Users\Administrator\Desktop\test.psd')
+    psd = PSDImage.load(r'C:\work\N5\ttt2.psd')
     for layer in psd.layers:
         if isLabel(layer):
             print getLabelSize(layer)
