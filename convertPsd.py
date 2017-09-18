@@ -10,7 +10,7 @@ sys.setdefaultencoding('utf-8')
 import getopt
 import json
 from psd_tools import PSDImage,Group,Layer
-from PSDParser import getLabelStrokeInfo,getLabelBold,getLabelItalic,getLabelSize,getLabelColor
+#from PSDParser import getLabelStrokeInfo,getLabelBold,getLabelItalic,getLabelSize,getLabelColor
 
 psdDir = ""
 imgDir = ""
@@ -402,17 +402,17 @@ def parseLayer(layer,depth,depthPath):
     if isLabel:
         oldAttrs["fontFamily"] = "Microsoft YaHei"
         oldAttrs["text"] = layer.text_data.text
-        se,sz,sc = getLabelStrokeInfo(layer)
-        if se:
-            oldAttrs["stroke"] = sz
-            oldAttrs["strokeColor"] = sc
-        if getLabelBold(layer):
-            oldAttrs["bold"] = "true"
-        if getLabelItalic(layer):
-            oldAttrs["italic"] = "true"
-        oldAttrs["size"] = getLabelSize(layer)
-        color,alpha = getLabelColor(layer)
-        oldAttrs["textColor"] = color
+        # se,sz,sc = getLabelStrokeInfo(layer)
+        # if se:
+        #     oldAttrs["stroke"] = sz
+        #     oldAttrs["strokeColor"] = sc
+        # if getLabelBold(layer):
+        #     oldAttrs["bold"] = "true"
+        # if getLabelItalic(layer):
+        #     oldAttrs["italic"] = "true"
+        # oldAttrs["size"] = getLabelSize(layer)
+        # color,alpha = getLabelColor(layer)
+        #oldAttrs["textColor"] = color
         if alpha != 1:
             oldAttrs["alpha"] = alpha
     else:
@@ -633,7 +633,7 @@ def main2():
     not use, for debug
     :return:
     '''
-    psd = PSDImage.load(r'E:\study\code\EgretProjects\psd\common\test1.psd')
+    psd = PSDImage.load(r'C:\work\N5\roll\art\psd\main2.psd')
 
     #print getLayerStroke(psd.layers[4])
     # global absPsdDir
@@ -646,5 +646,5 @@ def main2():
     #     print isLayerLocked(layer)
 
 if __name__ == '__main__':
-    #main2()
-    main(sys.argv[1:])
+    main2()
+    #main(sys.argv[1:])
