@@ -31,9 +31,13 @@ class ExmlHandler( xml.sax.ContentHandler):
        self.hasButton = False
        self.hasTween = False
        self.tweenIds = []
+       self.isInButton = False
 
    # 元素开始事件处理
    def startElement(self, tag, attributes):
+       #print "startElement:  " + tag
+       if self.isInButton:
+           return
        if tag == "e:Skin":
            self.content = ""
            self.tsName = ""
@@ -42,6 +46,7 @@ class ExmlHandler( xml.sax.ContentHandler):
            self.hasButton = False
            self.hasTween = False
            self.tweenIds = []
+           self.isInButton = False
 
            className = attributes.getValue("class")
            self.tsName = className.replace("Skin","")
@@ -51,6 +56,8 @@ class ExmlHandler( xml.sax.ContentHandler):
            self.ids.append((id,tag))
            self.buttonNames.append(name)
            self.hasButton = True
+           if tag == "n:BaseButton":
+               self.isInButton = True
        else:
            id = ""
            try:
@@ -121,6 +128,7 @@ class ExmlHandler( xml.sax.ContentHandler):
 
 
    def getContent(self,hasButton):
+       #print "getContent............."
        content = u""
        content += u"/**\n"
        content += u"* author:talus\n"
@@ -157,9 +165,7 @@ class ExmlHandler( xml.sax.ContentHandler):
            content += u"\n"
            content += self.getTweenContent()
            content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
-           content += u"        if (this.parent) {\n"
-           content += u"            this.parent.removeChild(this);\n"
-           content += u"        }\n"
+           content += u"        DisplayUtil.removeFromParent(this);\n"
            content += u"    }\n"
            content += u"}\n"
        else:
@@ -195,9 +201,7 @@ class ExmlHandler( xml.sax.ContentHandler):
            content += self.getTweenContent()
            content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
            content += u"        this.removeEventListener(egret.TouchEvent.TOUCH_TAP,this.onClick,this);\n"
-           content += u"        if (this.parent) {\n"
-           content += u"            this.parent.removeChild(this);\n"
-           content += u"        }\n"
+           content += u"        DisplayUtil.removeFromParent(this);\n"
            content += u"    }\n"
            content += u"}\n"
 
@@ -211,15 +215,20 @@ class ExmlHandler( xml.sax.ContentHandler):
            os.makedirs(dstDir)
        with open(dstFile,mode="w+") as f:
            f.write(self.getContent(self.hasButton))
-           f.close()
-           print u"生成文件成功：" + dstFile
+       print u"生成文件成功：" + dstFile
 
    # 元素结束事件处理
    def endElement(self, tag):
-       if tag == "e:Skin":
+       #print "endElement..........." + tag
+
+       if tag == "e:Skin" and not self.isInButton:
            self.genTsFile()
        else:
            pass
+
+       if tag == "n:BaseButton":
+           self.isInButton = False
+
 
 
 #获得文件的名字和扩展名
@@ -251,6 +260,7 @@ def walkDir(dir,parser,depthPath):
                 parseFile(parser,nm,depthPath,path)
 
 def parseFile(parser,fileName,depthPath,exmlFile):
+    #print "parseFile......................." + fileName
     global tsDir
     global dstDir
     global dstFile
@@ -259,7 +269,7 @@ def parseFile(parser,fileName,depthPath,exmlFile):
     depthFile = os.path.join(depthDir,fileName.replace("Skin","") + ".ts")
     if os.path.exists(depthFile):
         #文件存在，不生成
-        print u"文件已存在：" + depthFile
+        print u"文件已存在：" + fileName
         return
 
     dstDir = depthDir
