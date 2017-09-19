@@ -265,8 +265,84 @@ def getListTupleAttr(lst,key):
     return None
 
 
+def parseList(lst):
+    hasKh = False
+    for l in lst:
+        if l.strip() == r"[" or l.strip() == r"]":
+            hasKh = True
+            break
+    if hasKh:
+        nl = []
+        inKh = False
+        for l in lst:
+            if l.strip() == r"[" and inKh == False:
+                inKh = True
+                continue
+            if inKh and l.strip() == r"]":
+                inKh = False
+                break
+            if inKh:
+                nl.append(l)
+        return nl
+    else:
+        return " ".join(lst)
+
+def parseEngineData(layer):
+    try:
+        TySh = layer._tagged_blocks["TySh"][9][2]
+        for tp in TySh:
+            if tp[0] == "EngineData":
+                engineData = tp[1][0]
+                break
+        if isinstance(engineData,str) and engineData != "":
+            lines = engineData.splitlines()
+            newLines = []
+            for line in lines:
+                ln = line.strip()
+                if ln == "":
+                    continue
+                newLines.append(ln)
+
+            ed = {}
+            stack = [ed]
+            for idx, ln in enumerate(newLines):
+                stackLen = len(stack)
+                if stackLen <= 0:
+                    break
+                lastData = stack[stackLen - 1]
+
+                if ln == "<<":
+                    continue
+                if ln.startswith(r"/") and len(ln.split(r" ")) == 1 and newLines[idx + 1] == "<<":
+                    key = ln.lstrip(r"/")
+                    data = {}
+                    lastData[key] = data
+                    stack.append(data)
+                if ln.startswith(r"/") and len(ln.split(r" ")) > 1:
+                    lnlen = len(ln)
+                    if ln[lnlen - 1] == r"[":
+                        key = ln.lstrip(r"/")
+                        key = key.rstrip(r" [")
+                        data = {}
+                        lastData[key] = data
+                        stack.append(data)
+                        continue
+                    attrs = ln.split(r" ")
+                    key = attrs[0].lstrip(r"/")
+                    value = parseList(attrs[1:])
+                    lastData[key] = value
+                if ln == ">>":
+                    stack = stack[0:stackLen - 1]
+            return ed
+        else:
+            return None
+    except:
+        return None
+
+
 def main():
-    psd = PSDImage.load(r'C:\work\N5\ttt2.psd')
+
+    psd = PSDImage.load(r'C:\work\N5\roll\art\psd\main2.psd')
     for layer in psd.layers:
         if isLabel(layer):
             print getLabelSize(layer)
@@ -274,6 +350,62 @@ def main():
             print getLabelBold(layer)
             print getLabelItalic(layer)
             print getLabelStrokeInfo(layer)
+
+            TySh = layer._tagged_blocks["TySh"][9][2]
+            for tp in TySh:
+                if tp[0] == "EngineData":
+                    engineData = tp[1][0]
+                    break
+
+            print engineData
+            print type(engineData)
+
+            lines = engineData.splitlines()
+            newLines = []
+            for line in lines:
+                ln = line.strip()
+                if ln == "":
+                    continue
+                newLines.append(ln)
+            print newLines
+
+            print ""
+
+            ed = {}
+            stack = [ed]
+            for idx,ln in enumerate(newLines):
+                stackLen = len(stack)
+                if stackLen <= 0:
+                    break
+                lastData = stack[stackLen - 1]
+
+                if ln == "<<":
+                    continue
+                if ln.startswith(r"/") and len(ln.split(r" ")) == 1 and newLines[idx + 1] == "<<":
+                    key = ln.lstrip(r"/")
+                    data = {}
+                    lastData[key] = data
+                    stack.append(data)
+                if ln.startswith(r"/") and len(ln.split(r" ")) > 1:
+                    lnlen = len(ln)
+                    if ln[lnlen - 1] == r"[":
+                        key = ln.lstrip(r"/")
+                        key = key.rstrip(r" [")
+                        data = {}
+                        lastData[key] = data
+                        stack.append(data)
+                        continue
+                    attrs = ln.split(r" ")
+                    key = attrs[0].lstrip(r"/")
+                    value = parseList(attrs[1:])
+                    lastData[key] = value
+                if ln == ">>":
+                    stack = stack[0:stackLen-1]
+            print ed
+
+
+
+
 
 if __name__ == '__main__':
     main()

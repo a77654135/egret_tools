@@ -45,6 +45,7 @@ def parsePsd(fileName,depthPath):
     global absSkinDir
     global force
     global currentPsdFile
+    print "parsePsd:   " + fileName
 
     name,ext = getNameAndExt(fileName)
 
@@ -80,7 +81,7 @@ def parsePsd(fileName,depthPath):
             print u"解析 PSD 成功: {}".format(fileName)
     except Exception,e:
         print "--------------------------------------------"
-        print u"解析 PSD 失败:  {}".format(fileName)
+        print u"解析 PSD 失败:  {}   {}".format(fileName,e.message)
         print "--------------------------------------------"
 
     getImages(psd, depthPath[:])
@@ -421,17 +422,17 @@ def parseLayer(layer,depth,depthPath):
     if isLabel:
         oldAttrs["fontFamily"] = "Microsoft YaHei"
         oldAttrs["text"] = layer.text_data.text
-        # se,sz,sc = getLabelStrokeInfo(layer)
-        # if se:
-        #     oldAttrs["stroke"] = sz
-        #     oldAttrs["strokeColor"] = sc
+        se,sz,sc = getLabelStrokeInfo(layer)
+        if se:
+            oldAttrs["stroke"] = sz
+            oldAttrs["strokeColor"] = sc
         # if getLabelBold(layer):
         #     oldAttrs["bold"] = "true"
         # if getLabelItalic(layer):
         #     oldAttrs["italic"] = "true"
-        # oldAttrs["size"] = getLabelSize(layer)
-        # color,alpha = getLabelColor(layer)
-        #oldAttrs["textColor"] = color
+        oldAttrs["size"] = getLabelSize(layer)
+        color,alpha = getLabelColor(layer)
+        oldAttrs["textColor"] = color
         if alpha != 1:
             oldAttrs["alpha"] = alpha
     else:
@@ -479,6 +480,7 @@ def parseLayer(layer,depth,depthPath):
 
 #遍历psd的目录
 def parseDir(depthPath):
+    print "parsedir:   " + depthPath
     global absPsdDir
     dir = os.path.join(absPsdDir,*depthPath)
     for f in os.listdir(dir):
@@ -502,12 +504,16 @@ def parse():
     global absImgDir
     global absSkinDir
 
+    #print "parse.............."
+
     absPsdDir = os.path.abspath(psdDir)
     absImgDir = os.path.abspath(imgDir)
     absSkinDir = os.path.abspath(skinDir)
-
+    #print "1111111111111111111111111"
+    #print absPsdDir
     for f in os.listdir(absPsdDir):
         absFile = os.path.join(absPsdDir,f)
+        #print absFile
         if os.path.isdir(absFile):
             parseDir([f])
         elif os.path.isfile(absFile):
@@ -647,19 +653,188 @@ def main(argv):
         print u"解析psd失败：" + currentPsdFile
         print e.message
 
+def parseList(lst):
+    hasKh = False
+    for l in lst:
+        if l.strip() == r"[" or l.strip() == r"]":
+            hasKh = True
+            break
+    if hasKh:
+        nl = []
+        inKh = False
+        for l in lst:
+            if l.strip() == r"[" and inKh == False:
+                inKh = True
+                continue
+            if inKh and l.strip() == r"]":
+                inKh = False
+                break
+            if inKh:
+                nl.append(l)
+        return nl
+    else:
+        return " ".join(lst)
+
+def parseEngineData(layer):
+    try:
+        TySh = layer._tagged_blocks["TySh"][9][2]
+        for tp in TySh:
+            if tp[0] == "EngineData":
+                engineData = tp[1][0]
+                break
+        if isinstance(engineData,str) and engineData != "":
+            lines = engineData.splitlines()
+            newLines = []
+            for line in lines:
+                ln = line.strip()
+                if ln == "":
+                    continue
+                newLines.append(ln)
+
+            ed = {}
+            stack = [ed]
+            for idx, ln in enumerate(newLines):
+                stackLen = len(stack)
+                if stackLen <= 0:
+                    break
+                lastData = stack[stackLen - 1]
+
+                if ln == "<<":
+                    continue
+                if ln.startswith(r"/") and len(ln.split(r" ")) == 1 and newLines[idx + 1] == "<<":
+                    key = ln.lstrip(r"/")
+                    data = {}
+                    lastData[key] = data
+                    stack.append(data)
+                if ln.startswith(r"/") and len(ln.split(r" ")) > 1:
+                    lnlen = len(ln)
+                    if ln[lnlen - 1] == r"[":
+                        key = ln.lstrip(r"/")
+                        key = key.rstrip(r" [")
+                        data = {}
+                        lastData[key] = data
+                        stack.append(data)
+                        continue
+                    attrs = ln.split(r" ")
+                    key = attrs[0].lstrip(r"/")
+                    value = parseList(attrs[1:])
+                    lastData[key] = value
+                if ln == ">>":
+                    stack = stack[0:stackLen - 1]
+            return ed
+        else:
+            return None
+    except Exception,e:
+        #print "parseEngineData error: " + e.message
+        return None
+
+def rgbToHex(r,g,b):
+    r = hex(int(r))[2:]
+    g = hex(int(g))[2:]
+    b = hex(int(b))[2:]
+    r = "0" + r if len(r) < 2 else "" + r
+    g = "0" + g if len(g) < 2 else "" + g
+    b = "0" + b if len(b) < 2 else "" + b
+    return r"0x{}{}{}".format(r, g, b)
+
+def getLabelSize(label):
+    assert isinstance(label,Layer) and label.text_data is not None
+    try:
+        ed = parseEngineData(label)
+        if ed is None:
+            return 18
+        else:
+            return ed["EngineDict"]["StyleRun"]["RunArray"]["StyleSheet"]["StyleSheetData"]["FontSize"]
+    except Exception,e:
+        #print "getLabelSize error: " + e.message
+        return 18
+
+# def getLabelBold(label):
+#     assert isinstance(label) and label.text_data is not None
+
+def getLabelColor(label):
+    assert isinstance(label,Layer) and label.text_data is not None
+    try:
+        ed = parseEngineData(label)
+        if ed is None:
+            return "0x000000", 1
+        else:
+            colorInfo = ed["EngineDict"]["StyleRun"]["RunArray"]["StyleSheet"]["StyleSheetData"]["FillColor"]["Values"]
+            a, r, g, b = colorInfo[0], colorInfo[1], colorInfo[2], colorInfo[3]
+            return rgbToHex(round(float(r) * 255), round(float(g) * 255), round(float(b) * 255)), a
+    except Exception,e:
+        #print "getLabelColor error: " + e.message
+        return "0x000000", 1
+    # try:
+    #     assert isLabel(label)
+    #     info = getLabelInfo(label)
+    #     if info is not None:
+    #         colorInfo = info["FillColor"]["Values"]
+    #         a,r,g,b = colorInfo[0],colorInfo[1],colorInfo[2],colorInfo[3]
+    #     else:
+    #         a,r,g,b = 1,0,0,0
+    #     return rgbToHex(round(r*255),round(g*255),round(b*255)),a
+    # except:
+    #     return "0x000000",1
+
+def getLabelStrokeInfo(label):
+    assert isinstance(label,Layer) and label.text_data is not None
+    try:
+        #家里ps的版本
+
+        # info = label._tagged_blocks["lfx2"][2][2]
+        # for item in info:
+        #     if item[0] == "FrFX":
+        #         strokeInfo = item[1][2]
+        #         enabled = strokeInfo[0][1][0]
+        #         size = strokeInfo[5][1][1]
+        #         clr = strokeInfo[6][1][2]
+        #         r,g,b = clr[0][1][0],clr[1][1][0],clr[2][1][0]
+        #         #print enabled,size,r
+        #         return enabled,size,rgbToHex(round(r),round(g),round(b))
+        # return False,0,"0x000000"
+
+        #公司的ps版本
+        info = label._tagged_blocks["lfx2"][2][2]
+        for item in info:
+            if item[0] == "FrFX":
+                frfx = item[1][2]
+                enabled = getListTupleAttr(frfx,"enab")[0] if getListTupleAttr(frfx,"enab") is not None else False
+                size = getListTupleAttr(frfx,"Sz")[1] if getListTupleAttr(frfx,"Sz") is not None else 0
+                clr = getListTupleAttr(frfx,"Clr")[2]
+                if clr is not None:
+                    r, g, b = clr[0][1][0], clr[1][1][0], clr[2][1][0]
+                else:
+                    r,g,b, = 0,0,0
+                return enabled, size, rgbToHex(round(r), round(g), round(b))
+        return False, 0, "0x000000"
+
+    except Exception,e:
+        #print "getLabelStrokeInfo error:  " + e.message
+        return False,0,"0x000000"
+
+def getListTupleAttr(lst,key):
+    for l in lst:
+        if l[0].strip() == key:
+            return l[1]
+    return None
+
 def main2():
     '''
     not use, for debug
     :return:
     '''
-    psd = PSDImage.load(r'C:\work\N5\roll\art\psd\main2.psd')
+    psd = PSDImage.load(r'C:\work\N5\roll\art\main2.psd')
 
     #print getLayerStroke(psd.layers[4])
-    # global absPsdDir
-    # dir = r"E:\study\code\EgretProjects\psd\common"
-    # absPsdDir = os.path.abspath(dir)
-    # parseDir([])
-    print psd
+    global absPsdDir
+    global absSkinDir
+    dir = r"C:\work\N5\roll\art"
+    skinDir = r"C:\work\N5\roll\art"
+    absPsdDir = os.path.abspath(dir)
+    absSkinDir = absPsdDir
+    parseDir([])
+    #print psd
     # getAttrs(psd.layers[2])
     # for layer in psd.layers:
     #     print isLayerLocked(layer)
