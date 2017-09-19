@@ -45,7 +45,7 @@ def parsePsd(fileName,depthPath):
     global absSkinDir
     global force
     global currentPsdFile
-    print "parsePsd:   " + fileName
+    #print "parsePsd:   " + fileName
 
     name,ext = getNameAndExt(fileName)
 
@@ -156,6 +156,8 @@ def getAttrs(layer):
     try:
         if layer.name.strip():
             lst = layer.name.strip().split(r":")
+            if len(lst) <= 1:
+                return ret
             name = lst[0]
             ret["clsName"] = name[1:] if name.startswith(r"$") else name
             if len(lst) > 1:
@@ -169,7 +171,7 @@ def getAttrs(layer):
         else:
             return None
     except Exception,e:
-        print layer.name.strip()
+        #print layer.name.strip()
         print u"解析名字属性出错： " + e.message
         return None
 
@@ -422,6 +424,7 @@ def parseLayer(layer,depth,depthPath):
     if isLabel:
         oldAttrs["fontFamily"] = "Microsoft YaHei"
         oldAttrs["text"] = layer.text_data.text
+        #print layer.text_data.text
         se,sz,sc = getLabelStrokeInfo(layer)
         if se:
             oldAttrs["stroke"] = sz
@@ -433,7 +436,7 @@ def parseLayer(layer,depth,depthPath):
         oldAttrs["size"] = getLabelSize(layer)
         color,alpha = getLabelColor(layer)
         oldAttrs["textColor"] = color
-        if alpha != 1:
+        if float(alpha) != float(1):
             oldAttrs["alpha"] = alpha
     else:
         src = r"{}_png".format(name)
@@ -480,20 +483,24 @@ def parseLayer(layer,depth,depthPath):
 
 #遍历psd的目录
 def parseDir(depthPath):
-    print "parsedir:   " + depthPath
+    #print "parsedir:   " + depthPath
     global absPsdDir
     dir = os.path.join(absPsdDir,*depthPath)
     for f in os.listdir(dir):
         absFile = os.path.join(dir,f)
-        if os.path.isdir(absFile):
-            dpt = depthPath[:]
-            dpt.append(f)
-            parseDir(dpt)
-        elif os.path.isfile(absFile):
-            name, ext = getNameAndExt(f)
-            if ext == "psd":
+        try:
+            if os.path.isdir(absFile):
                 dpt = depthPath[:]
-                parsePsd(f,dpt)
+                dpt.append(f)
+                parseDir(dpt)
+            elif os.path.isfile(absFile):
+                name, ext = getNameAndExt(f)
+                if ext == "psd":
+                    dpt = depthPath[:]
+                    parsePsd(f,dpt)
+        except Exception,e:
+            print "parseDir error:  " + e.message
+            continue
 
 def parse():
     global psdDir
@@ -824,13 +831,12 @@ def main2():
     not use, for debug
     :return:
     '''
-    psd = PSDImage.load(r'C:\work\N5\roll\art\main2.psd')
+    #psd = PSDImage.load(r'C:\work\N5\roll\art\main2.psd')
 
     #print getLayerStroke(psd.layers[4])
     global absPsdDir
     global absSkinDir
-    dir = r"C:\work\N5\roll\art"
-    skinDir = r"C:\work\N5\roll\art"
+    dir = r"C:\work\N5\roll\art\testPsd"
     absPsdDir = os.path.abspath(dir)
     absSkinDir = absPsdDir
     parseDir([])
