@@ -31,12 +31,16 @@ class ExmlHandler( xml.sax.ContentHandler):
        self.hasButton = False
        self.hasTween = False
        self.tweenIds = []
-       self.isInButton = False
+       self.isInSkin = False
 
    # 元素开始事件处理
    def startElement(self, tag, attributes):
        #print "startElement:  " + tag
-       if self.isInButton:
+       #print self.isInSkin
+       if self.isInSkin:
+           return
+       if tag == "e:skinName":
+           self.isInSkin = True
            return
        if tag == "e:Skin":
            self.content = ""
@@ -46,7 +50,7 @@ class ExmlHandler( xml.sax.ContentHandler):
            self.hasButton = False
            self.hasTween = False
            self.tweenIds = []
-           self.isInButton = False
+           self.isInSkin = False
 
            className = attributes.getValue("class")
            self.tsName = className.replace("Skin","")
@@ -56,13 +60,13 @@ class ExmlHandler( xml.sax.ContentHandler):
            self.ids.append((id,tag))
            self.buttonNames.append(name)
            self.hasButton = True
-           if tag == "n:BaseButton":
-               self.isInButton = True
+
        else:
            id = ""
            try:
                id = attributes.getValue("id")
            except Exception,e:
+               #print e.message
                pass
            finally:
                if id != "":
@@ -221,13 +225,13 @@ class ExmlHandler( xml.sax.ContentHandler):
    def endElement(self, tag):
        #print "endElement..........." + tag
 
-       if tag == "e:Skin" and not self.isInButton:
+       if tag == "e:Skin" and not self.isInSkin:
            self.genTsFile()
        else:
            pass
 
-       if tag == "n:BaseButton":
-           self.isInButton = False
+       if tag == "e:skinName":
+           self.isInSkin = False
 
 
 
@@ -288,6 +292,7 @@ def parse():
     walkDir(exmlDir,parser,[])
 
 def parseIgnore():
+    #print "parseIgnore................"
     global ignoreList
     global ignoreFile
     if ignoreFile != "":
@@ -296,6 +301,7 @@ def parseIgnore():
                 ignoreList = json.load(f)
                 f.close()
         except Exception,e:
+            #print e.message
             pass
 
 def main(argv):
@@ -334,7 +340,18 @@ def main(argv):
     except Exception,e:
         print u"出错咯： " + e.message
 
+def ttt():
+    parser = xml.sax.make_parser()
+    parser.setFeature(xml.sax.handler.feature_namespaces, 0)
+
+    Handler = ExmlHandler()
+    parser.setContentHandler(Handler)
+
+    parser.parse(r"")
 
 if __name__ == '__main__':
+
+    #ttt()
+
     #parse()
     main(sys.argv[1:])

@@ -764,14 +764,14 @@ def getLabelColor(label):
     try:
         ed = parseEngineData(label)
         if ed is None:
-            return "0x000000", 1
+            return "0xffffff", 1
         else:
             colorInfo = ed["EngineDict"]["StyleRun"]["RunArray"]["StyleSheet"]["StyleSheetData"]["FillColor"]["Values"]
             a, r, g, b = colorInfo[0], colorInfo[1], colorInfo[2], colorInfo[3]
             return rgbToHex(round(float(r) * 255), round(float(g) * 255), round(float(b) * 255)), a
     except Exception,e:
         #print "getLabelColor error: " + e.message
-        return "0x000000", 1
+        return "0xffffff", 1
     # try:
     #     assert isLabel(label)
     #     info = getLabelInfo(label)
@@ -782,7 +782,7 @@ def getLabelColor(label):
     #         a,r,g,b = 1,0,0,0
     #     return rgbToHex(round(r*255),round(g*255),round(b*255)),a
     # except:
-    #     return "0x000000",1
+    #     return "0xffffff",1
 
 def getLabelStrokeInfo(label):
     assert isinstance(label,Layer) and label.text_data is not None
@@ -799,7 +799,7 @@ def getLabelStrokeInfo(label):
         #         r,g,b = clr[0][1][0],clr[1][1][0],clr[2][1][0]
         #         #print enabled,size,r
         #         return enabled,size,rgbToHex(round(r),round(g),round(b))
-        # return False,0,"0x000000"
+        # return False,0,"0xffffff"
 
         #公司的ps版本
         info = label._tagged_blocks["lfx2"][2][2]
@@ -814,11 +814,11 @@ def getLabelStrokeInfo(label):
                 else:
                     r,g,b, = 0,0,0
                 return enabled, size, rgbToHex(round(r), round(g), round(b))
-        return False, 0, "0x000000"
+        return False, 0, "0xffffff"
 
     except Exception,e:
         #print "getLabelStrokeInfo error:  " + e.message
-        return False,0,"0x000000"
+        return False,0,"0xffffff"
 
 def getListTupleAttr(lst,key):
     for l in lst:
