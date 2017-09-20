@@ -9,6 +9,7 @@ class BaseButton extends eui.Component {
     private isTouch: boolean = false;
     private canTouch: boolean = true;
 
+    private _needScaleAnim: boolean = true;
     private _toScale: number = 0.9;
     private _sound: string = null;
 
@@ -33,12 +34,18 @@ class BaseButton extends eui.Component {
             this._normalBgSource = this._bgSource;
             this._touchBgSource = this.getImageByStatus(this._normalBgSource, "touch");
             this._disableBgSource = this.getImageByStatus(this._normalBgSource, "disable");
+            if(RES.hasRes(this._touchBgSource) || this._toScale == 1){
+                this._needScaleAnim = false;
+            }
         }
         if (instance == this.icon) {
             this.icon.source = this._iconSource;
             this._normalIconSource = this._iconSource;
             this._touchIconSource = this.getImageByStatus(this._normalIconSource, "touch");
             this._disableIconSource = this.getImageByStatus(this._normalIconSource, "disable");
+            if(RES.hasRes(this._touchIconSource)  || this._toScale == 1){
+                this._needScaleAnim = false;
+            }
         }
     }
 
@@ -179,7 +186,7 @@ class BaseButton extends eui.Component {
         }
         this.isTouch = true;
         this.status = ButtonStatus.DOWN;
-        if (this._toScale != 1 && !RES.hasRes(this._touchBgSource)) {
+        if (this._needScaleAnim) {
             egret.Tween.get(this).to({ scaleX: this._toScale, scaleY: this._toScale }, 50);
         }
     }
@@ -188,7 +195,7 @@ class BaseButton extends eui.Component {
             return;
         }
         this.status = ButtonStatus.UP;
-        if (this._toScale != 1 && !RES.hasRes(this._touchBgSource)) {
+        if (this._needScaleAnim) {
             egret.Tween.get(this).to({ scaleX: 1.0, scaleY: 1.0 }, 50);
         }
         this.isTouch = false;
