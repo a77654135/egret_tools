@@ -216,10 +216,27 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
 
     prefix = depth * u"    "
     content = u""
+
     if isButton:
         content += u"{0}<{1} ".format(prefix, clz)
+
+        if newAttrs.has_key("x"):
+            content += u'{0}="{1}" '.format("x", newAttrs["x"])
+        if newAttrs.has_key("y"):
+            content += u'{0}="{1}" '.format("y", newAttrs["y"])
+        if newAttrs.has_key("width"):
+            content += u'{0}="{1}" '.format("width", newAttrs["width"])
+        if newAttrs.has_key("height"):
+            content += u'{0}="{1}" '.format("height", newAttrs["height"])
+        if newAttrs.has_key("id"):
+            content += u'{0}="{1}" '.format("id", newAttrs["id"])
+        if newAttrs.has_key("name"):
+            content += u'{0}="{1}" '.format("name", newAttrs["name"])
+
         for k, v in newAttrs.iteritems():
             if k == "clsName":
+                continue
+            if k in ("x","y","width","height","id","name"):
                 continue
             content += u'{0}="{1}" '.format(k, v)
         content += u">\n";
@@ -233,8 +250,24 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
         content += u"{}</{}>".format(prefix,clz)
     else:
         content += u"{0}<{1} ".format(prefix, clz)
+
+        if newAttrs.has_key("x"):
+            content += u'{0}="{1}" '.format("x", newAttrs["x"])
+        if newAttrs.has_key("y"):
+            content += u'{0}="{1}" '.format("y", newAttrs["y"])
+        if newAttrs.has_key("width"):
+            content += u'{0}="{1}" '.format("width", newAttrs["width"])
+        if newAttrs.has_key("height"):
+            content += u'{0}="{1}" '.format("height", newAttrs["height"])
+        if newAttrs.has_key("id"):
+            content += u'{0}="{1}" '.format("id", newAttrs["id"])
+        if newAttrs.has_key("name"):
+            content += u'{0}="{1}" '.format("name", newAttrs["name"])
+
         for k, v in newAttrs.iteritems():
             if k == "clsName":
+                continue
+            if k in ("x","y","width","height","id","name"):
                 continue
             content += u'{0}="{1}" '.format(k, v)
         content += u'/>'
@@ -452,15 +485,47 @@ def parseLayer(layer,depth,depthPath):
 
     if isLabel:
         content += u'{}<e:Label '.format(prefix)
+
+        if newAttrs.has_key("x"):
+            content += u'{0}="{1}" '.format("x", newAttrs["x"])
+        if newAttrs.has_key("y"):
+            content += u'{0}="{1}" '.format("y", newAttrs["y"])
+        if newAttrs.has_key("width"):
+            content += u'{0}="{1}" '.format("width", newAttrs["width"])
+        if newAttrs.has_key("height"):
+            content += u'{0}="{1}" '.format("height", newAttrs["height"])
+        if newAttrs.has_key("id"):
+            content += u'{0}="{1}" '.format("id", newAttrs["id"])
+        if newAttrs.has_key("name"):
+            content += u'{0}="{1}" '.format("name", newAttrs["name"])
+
         for k,v in newAttrs.iteritems():
             if k == "clsName":
+                continue
+            if k in ("x","y","width","height","id","name"):
                 continue
             content += u'{0}="{1}" '.format(k,v)
         content += u'/>'
     else:
         content += u'{}<e:Image '.format(prefix)
+
+        if newAttrs.has_key("x"):
+            content += u'{0}="{1}" '.format("x", newAttrs["x"])
+        if newAttrs.has_key("y"):
+            content += u'{0}="{1}" '.format("y", newAttrs["y"])
+        if newAttrs.has_key("width"):
+            content += u'{0}="{1}" '.format("width", newAttrs["width"])
+        if newAttrs.has_key("height"):
+            content += u'{0}="{1}" '.format("height", newAttrs["height"])
+        if newAttrs.has_key("id"):
+            content += u'{0}="{1}" '.format("id", newAttrs["id"])
+        if newAttrs.has_key("name"):
+            content += u'{0}="{1}" '.format("name", newAttrs["name"])
+
         for k,v in newAttrs.iteritems():
             if k == "clsName":
+                continue
+            if k in ("x","y","width","height","id","name"):
                 continue
             content += u'{0}="{1}" '.format(k,v)
         content += u'/>'
