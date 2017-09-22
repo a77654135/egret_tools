@@ -200,7 +200,7 @@ def getS9Info(name):
     return None
 
 #生成信息
-def genContent(layer,clz,otherAttr,depth,isButton=False):
+def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
     assert isinstance(layer,Layer) or isinstance(layer,Group)
     attrs = getAttrs(layer)
     if attrs is None:
@@ -208,6 +208,8 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
 
     x, y, width, height = getDimension(layer)
     if isButton:
+        assert len(layer.layers) > 0
+        x,y,width,height = getDimension(layer.layers[0])
         x,y = getCenterPos(x,y,width,height)
     oldAttrs = {
         "x": x,
@@ -249,25 +251,45 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
             if k in ("x","y","width","height","id","name"):
                 continue
             content += u'{0}="{1}" '.format(k, v)
-        content += u">\n";
+        content += u">\n"
 
         content += u"{}<e:skinName><e:Skin>\n".format(prefix*2)
-        if otherAttr.has_key("bgSource"):
-            src = otherAttr["bgSource"]
-            s9Info = getS9Info(src)
-            #print "src:  {}   info:{}  ".format(src,s9Info)
-            if s9Info is not None:
-                content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "bg",src,s9Info)
+
+        bx,by,bw,bh = 0,0,0,0
+        for idx,ly in enumerate(layer.layers):
+            if idx == 0:
+                bx,by,bw,bh = getDimension(ly)
+                src = getLayerSrc(ly,depthPath)
+                s9Info = getS9Info(src)
+                content += u'{}<e:Image id="{}" x="0" y="0" width="100%" height="100%" source="{}" '.format(prefix * 3,"bg",src)
+                if s9Info is not None:
+                    content += u'scale9Grid="{}" />\n'.format(s9Info)
+                else:
+                    content += u'/>\n'
             else:
-                content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}"/>\n'.format(prefix * 3, "bg",src)
-        if otherAttr.has_key("iconSource"):
-            src = otherAttr["iconSource"]
-            s9Info = getS9Info(src)
-            #print "src:  {}   info:{}  ".format(src, s9Info)
-            if s9Info is not None:
-                content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "icon",src,s9Info)
-            else:
-                content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}"/>\n'.format(prefix * 3, "icon", src)
+                if isLayerLocked(ly):
+                    # 图层被锁定，不解析
+                    continue
+                if isinstance(ly, Layer):
+                    content += parseLayer(ly, depth + 2, depthPath[:],[bx,by])
+
+
+        # if otherAttr.has_key("bgSource"):
+        #     src = otherAttr["bgSource"]
+        #     s9Info = getS9Info(src)
+        #     #print "src:  {}   info:{}  ".format(src,s9Info)
+        #     if s9Info is not None:
+        #         content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "bg",src,s9Info)
+        #     else:
+        #         content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}"/>\n'.format(prefix * 3, "bg",src)
+        # if otherAttr.has_key("iconSource"):
+        #     src = otherAttr["iconSource"]
+        #     s9Info = getS9Info(src)
+        #     #print "src:  {}   info:{}  ".format(src, s9Info)
+        #     if s9Info is not None:
+        #         content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "icon",src,s9Info)
+        #     else:
+        #         content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}"/>\n'.format(prefix * 3, "icon", src)
 
         content += u'{}</e:Skin></e:skinName>\n'.format(prefix*2)
         content += u"{}</{}>".format(prefix,clz)
@@ -368,25 +390,31 @@ def parseButtonGroup(group,depth,depthPath,root=False):
     attrs = getAttrs(group)
     if attrs.has_key("id"):
         otherAttr["name"] = attrs["id"]
-    if length == 1:
-        otherAttr["skinName"] = "SimpleButtonSkin"
-        layer = layers[0]
-        src = getLayerSrc(layer,depthPath)
+    otherAttr["skinName"] = "SimpleButtonSkin"
+    if length > 0:
+        bgLayer = layers[0]
+        src = getLayerSrc(bgLayer, depthPath)
         otherAttr["bgSource"] = src
-    elif length > 1:
-        #bgLayer = getLayerById(group,"bg")
-        #iconLayer = getLayerById(group,"icon")
-        bgLayer = group.layers[1]
-        iconLayer = group.layers[0]
-        if bgLayer is not None and iconLayer is not None:
-            otherAttr["skinName"] = "IconButtonSkin"
-        if bgLayer is not None:
-            bgSrc = getLayerSrc(bgLayer,depthPath)
-            otherAttr["bgSource"] = bgSrc
-        if iconLayer is not None:
-            iconSrc = getLayerSrc(iconLayer,depthPath)
-            otherAttr["iconSource"] = iconSrc
-    return genContent(group,cls,otherAttr,depth,True)
+
+    # if length == 1:
+    #     otherAttr["skinName"] = "SimpleButtonSkin"
+    #     layer = layers[0]
+    #     src = getLayerSrc(layer,depthPath)
+    #     otherAttr["bgSource"] = src
+    # elif length > 1:
+    #     #bgLayer = getLayerById(group,"bg")
+    #     #iconLayer = getLayerById(group,"icon")
+    #     bgLayer = group.layers[1]
+    #     iconLayer = group.layers[0]
+    #     if bgLayer is not None and iconLayer is not None:
+    #         otherAttr["skinName"] = "IconButtonSkin"
+    #     if bgLayer is not None:
+    #         bgSrc = getLayerSrc(bgLayer,depthPath)
+    #         otherAttr["bgSource"] = bgSrc
+    #     if iconLayer is not None:
+    #         iconSrc = getLayerSrc(iconLayer,depthPath)
+    #         otherAttr["iconSource"] = iconSrc
+    return genContent(group,cls,otherAttr,depth,True,depthPath)
 
 
 #解析特殊的图层组，根据命名规则，生成对应的信息
@@ -450,7 +478,7 @@ def parseGroup(group,depth,depthPath,root=False):
     return content
 
 #解析psd图层
-def parseLayer(layer,depth,depthPath):
+def parseLayer(layer,depth,depthPath,offset=[0,0]):
     assert isinstance(layer,Layer)
     global absImgDir
     global intelligent
@@ -468,8 +496,8 @@ def parseLayer(layer,depth,depthPath):
     alpha = 1 if layer.opacity != 255 else layer.opacity / 255
 
     oldAttrs = {
-        "x":x,
-        "y":y,
+        "x":x - offset[0],
+        "y":y - offset[1],
         "width":width,
         "height":height,
         "touchEnabled":"false"
