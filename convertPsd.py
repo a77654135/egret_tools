@@ -30,6 +30,9 @@ genFontImg = False
 resNameMap = {}
 currentPsdFile = ""
 
+s9gFile = ""
+s9gMap = {}
+
 #获得文件的名字和扩展名
 def getNameAndExt(fileName):
     list = fileName.split(r".")
@@ -137,11 +140,11 @@ def getDimension(layer,isButton=False):
     try:
         if isinstance(layer,Group):
             box = layer.bbox
-            return box.x1, box.y1, box.width, box.height
+            return round(box.x1), round(box.y1), round(box.width), round(box.height)
         elif isinstance(layer,Layer):
             #box = layer.transform_bbox if layer.transform_bbox is not None else layer.bbox
             box = layer.bbox
-            return box.x1, box.y1, box.width, box.height
+            return round(box.x1), round(box.y1), round(box.width), round(box.height)
         return 0,0,0,0
     except Exception,e:
         # print "--------------------------------------------"
@@ -171,7 +174,6 @@ def getAttrs(layer):
         else:
             return None
     except Exception,e:
-        #print layer.name.strip()
         print u"解析名字属性出错： " + e.message
         return None
 
@@ -188,6 +190,14 @@ def mergeAttr(attr1,attr2):
     for k,v in attr2.iteritems():
         ret[k] = v
     return ret
+
+#name:green_btn_png or green_btn
+def getS9Info(name):
+    global s9gMap
+    name = name.replace("_png","")
+    if s9gMap.has_key(name):
+        return s9gMap[name]
+    return None
 
 #生成信息
 def genContent(layer,clz,otherAttr,depth,isButton=False):
@@ -206,8 +216,8 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
         "height": height
     }
     if isButton:
-        oldAttrs["anchorOffsetX"] = width * 0.5
-        oldAttrs["anchorOffsetY"] = height * 0.5
+        oldAttrs["anchorOffsetX"] = round(width * 0.5)
+        oldAttrs["anchorOffsetY"] = round(height * 0.5)
         oldAttrs["touchChildren"] = "false"
         oldAttrs["touchEnabled"] = "true"
 
@@ -243,9 +253,22 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
 
         content += u"{}<e:skinName><e:Skin>\n".format(prefix*2)
         if otherAttr.has_key("bgSource"):
-            content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}"/>\n'.format(prefix*3,"bg",otherAttr["bgSource"])
+            src = otherAttr["bgSource"]
+            s9Info = getS9Info(src)
+            print "src:  {}   info:{}  ".format(src,s9Info)
+            if s9Info is not None:
+                content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "bg",src,s9Info)
+            else:
+                content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}"/>\n'.format(prefix * 3, "bg",src)
         if otherAttr.has_key("iconSource"):
-            content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}"/>\n'.format(prefix*3,"icon",otherAttr["iconSource"])
+            src = otherAttr["iconSource"]
+            s9Info = getS9Info(src)
+            print "src:  {}   info:{}  ".format(src, s9Info)
+            if s9Info is not None:
+                content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "icon",src,s9Info)
+            else:
+                content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}"/>\n'.format(prefix * 3, "icon", src)
+
         content += u'{}</e:Skin></e:skinName>\n'.format(prefix*2)
         content += u"{}</{}>".format(prefix,clz)
     else:
@@ -330,7 +353,7 @@ def getLayerSrc(layer,depthPath):
 def getCenterPos(x,y,width,height):
     hw = width * 0.5
     hh = height * 0.5
-    return x+hw,y+hh
+    return round(x+hw),round(y+hh)
 
 #解析特殊的图层组，根据命名规则，生成对应的信息
 def parseButtonGroup(group,depth,depthPath,root=False):
@@ -434,6 +457,7 @@ def parseLayer(layer,depth,depthPath):
     global genImg
     global genFontImg
     global currentPsdFile
+    global s9gMap
 
     content = u""
     prefix = depth * u"    "
@@ -460,7 +484,7 @@ def parseLayer(layer,depth,depthPath):
         #print layer.text_data.text
         se,sz,sc = getLabelStrokeInfo(layer)
         if se:
-            oldAttrs["stroke"] = sz
+            oldAttrs["stroke"] = round(sz)
             oldAttrs["strokeColor"] = sc
         # if getLabelBold(layer):
         #     oldAttrs["bold"] = "true"
@@ -479,9 +503,12 @@ def parseLayer(layer,depth,depthPath):
                 parentFolder = depthPath[length - 1]
                 src = getIntelligentSource(src, parentFolder)
         oldAttrs["source"] = src
+        if s9gMap.has_key(name):
+            oldAttrs["scale9Grid"] = s9gMap[name]
 
     attrs = getAttrs(layer)
     newAttrs = mergeAttr(oldAttrs, attrs)
+
 
     if isLabel:
         content += u'{}<e:Label '.format(prefix)
@@ -684,8 +711,9 @@ def main(argv):
     global force
     global genFontImg
     global currentPsdFile
+    global s9gFile
     try:
-        opts, args = getopt.getopt(argv, "p:i:s:r:", ["psdDir=", "imgDir=","skinDir=","genImg","genFontImg","resFile=","intelligent","force"])
+        opts, args = getopt.getopt(argv, "p:i:s:r:", ["psdDir=", "imgDir=","skinDir=","genImg","genFontImg","resFile=","s9=","intelligent","force"])
     except getopt.GetoptError:
         print "--------------------------------------------"
         #print 'convertPsd -p <psdDir> -s <skinDir>    -i <imgDir> --genImg --genFontImg   -r resFile --intelligent --force'
@@ -715,10 +743,15 @@ def main(argv):
             force = True
         elif opt in ("--genFontImg",):
             genFontImg = True
+        elif opt in ("--s9",):
+            s9gFile = arg
 
     #psdDir = r"C:\work\N5\roll\psd"
     if intelligent:
         parseResourceFile()
+    if s9gFile != "":
+        parseS9File()
+
     try:
         parse()
     except Exception,e:
@@ -816,7 +849,7 @@ def getLabelSize(label):
         if ed is None:
             return 18
         else:
-            return ed["EngineDict"]["StyleRun"]["RunArray"]["StyleSheet"]["StyleSheetData"]["FontSize"]
+            return round(ed["EngineDict"]["StyleRun"]["RunArray"]["StyleSheet"]["StyleSheetData"]["FontSize"])
     except Exception,e:
         #print "getLabelSize error: " + e.message
         return 18
@@ -890,6 +923,27 @@ def getListTupleAttr(lst,key):
         if l[0].strip() == key:
             return l[1]
     return None
+
+def parseS9File():
+    global s9gFile
+    global s9gMap
+
+    absS9File = os.path.abspath(s9gFile)
+
+    if os.path.exists(absS9File):
+        try:
+            with open(absS9File,mode='r') as f:
+                s9gMap = json.load(f,encoding="utf-8")
+            print u"解析 .9 文件 success......"
+        except Exception,e:
+            print "--------------------------------------------"
+            print u"解析 .9 文件 failed......"
+            print e.message
+            print "--------------------------------------------"
+    else:
+        print "--------------------------------------------"
+        print u'无法找到 .9 文件 ......'
+        print "--------------------------------------------"
 
 def main2():
     '''
