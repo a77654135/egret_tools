@@ -255,7 +255,7 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
         if otherAttr.has_key("bgSource"):
             src = otherAttr["bgSource"]
             s9Info = getS9Info(src)
-            print "src:  {}   info:{}  ".format(src,s9Info)
+            #print "src:  {}   info:{}  ".format(src,s9Info)
             if s9Info is not None:
                 content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "bg",src,s9Info)
             else:
@@ -263,7 +263,7 @@ def genContent(layer,clz,otherAttr,depth,isButton=False):
         if otherAttr.has_key("iconSource"):
             src = otherAttr["iconSource"]
             s9Info = getS9Info(src)
-            print "src:  {}   info:{}  ".format(src, s9Info)
+            #print "src:  {}   info:{}  ".format(src, s9Info)
             if s9Info is not None:
                 content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "icon",src,s9Info)
             else:
