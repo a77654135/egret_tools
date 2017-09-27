@@ -256,7 +256,9 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
         content += u"{}<e:skinName><e:Skin>\n".format(prefix*2)
 
         bx,by,bw,bh = 0,0,0,0
-        for idx,ly in enumerate(layer.layers):
+        layers = layer.layers
+        layers.reverse()
+        for idx,ly in enumerate(layers):
             if idx == 0:
                 bx,by,bw,bh = getDimension(ly)
                 src = getLayerSrc(ly,depthPath)
@@ -542,13 +544,13 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
         content += u'{}<e:Label '.format(prefix)
 
         if newAttrs.has_key("x"):
-            content += u'{0}="{1}" '.format("x", newAttrs["x"])
+            content += u'{0}="{1}" '.format("x", int(newAttrs["x"]))
         if newAttrs.has_key("y"):
-            content += u'{0}="{1}" '.format("y", newAttrs["y"])
+            content += u'{0}="{1}" '.format("y", int(newAttrs["y"]))
         if newAttrs.has_key("width"):
-            content += u'{0}="{1}" '.format("width", newAttrs["width"])
+            content += u'{0}="{1}" '.format("width", int(newAttrs["width"]))
         if newAttrs.has_key("height"):
-            content += u'{0}="{1}" '.format("height", newAttrs["height"])
+            content += u'{0}="{1}" '.format("height", int(newAttrs["height"]))
         if newAttrs.has_key("id"):
             content += u'{0}="{1}" '.format("id", newAttrs["id"])
         if newAttrs.has_key("name"):
@@ -565,13 +567,13 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
         content += u'{}<e:Image '.format(prefix)
 
         if newAttrs.has_key("x"):
-            content += u'{0}="{1}" '.format("x", newAttrs["x"])
+            content += u'{0}="{1}" '.format("x", int(newAttrs["x"]))
         if newAttrs.has_key("y"):
-            content += u'{0}="{1}" '.format("y", newAttrs["y"])
+            content += u'{0}="{1}" '.format("y", int(newAttrs["y"]))
         if newAttrs.has_key("width"):
-            content += u'{0}="{1}" '.format("width", newAttrs["width"])
+            content += u'{0}="{1}" '.format("width", int(newAttrs["width"]))
         if newAttrs.has_key("height"):
-            content += u'{0}="{1}" '.format("height", newAttrs["height"])
+            content += u'{0}="{1}" '.format("height", int(newAttrs["height"]))
         if newAttrs.has_key("id"):
             content += u'{0}="{1}" '.format("id", newAttrs["id"])
         if newAttrs.has_key("name"):
