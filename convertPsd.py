@@ -140,11 +140,11 @@ def getDimension(layer,isButton=False):
     try:
         if isinstance(layer,Group):
             box = layer.bbox
-            return round(box.x1), round(box.y1), round(box.width), round(box.height)
+            return int(box.x1), int(box.y1), int(box.width), int(box.height)
         elif isinstance(layer,Layer):
             #box = layer.transform_bbox if layer.transform_bbox is not None else layer.bbox
             box = layer.bbox
-            return round(box.x1), round(box.y1), round(box.width), round(box.height)
+            return int(box.x1), int(box.y1), int(box.width), int(box.height)
         return 0,0,0,0
     except Exception,e:
         # print "--------------------------------------------"
@@ -218,8 +218,8 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
         "height": height
     }
     if isButton:
-        oldAttrs["anchorOffsetX"] = round(width * 0.5)
-        oldAttrs["anchorOffsetY"] = round(height * 0.5)
+        oldAttrs["anchorOffsetX"] = int(width * 0.5)
+        oldAttrs["anchorOffsetY"] = int(height * 0.5)
         oldAttrs["touchChildren"] = "false"
         oldAttrs["touchEnabled"] = "true"
 
@@ -377,7 +377,7 @@ def getLayerSrc(layer,depthPath):
 def getCenterPos(x,y,width,height):
     hw = width * 0.5
     hh = height * 0.5
-    return round(x+hw),round(y+hh)
+    return int(x+hw),int(y+hh)
 
 #解析特殊的图层组，根据命名规则，生成对应的信息
 def parseButtonGroup(group,depth,depthPath,root=False):
@@ -394,7 +394,7 @@ def parseButtonGroup(group,depth,depthPath,root=False):
         otherAttr["name"] = attrs["id"]
     otherAttr["skinName"] = "SimpleButtonSkin"
     if length > 0:
-        bgLayer = layers[0]
+        bgLayer = layers[length-1]
         src = getLayerSrc(bgLayer, depthPath)
         otherAttr["bgSource"] = src
 
@@ -514,7 +514,7 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
         #print layer.text_data.text
         se,sz,sc = getLabelStrokeInfo(layer)
         if se:
-            oldAttrs["stroke"] = round(sz)
+            oldAttrs["stroke"] = int(sz)
             oldAttrs["strokeColor"] = sc
         # if getLabelBold(layer):
         #     oldAttrs["bold"] = "true"
@@ -879,7 +879,7 @@ def getLabelSize(label):
         if ed is None:
             return 18
         else:
-            return round(ed["EngineDict"]["StyleRun"]["RunArray"]["StyleSheet"]["StyleSheetData"]["FontSize"])
+            return int(ed["EngineDict"]["StyleRun"]["RunArray"]["StyleSheet"]["StyleSheetData"]["FontSize"])
     except Exception,e:
         #print "getLabelSize error: " + e.message
         return 18
