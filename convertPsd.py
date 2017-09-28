@@ -58,9 +58,9 @@ def parsePsd(fileName,depthPath):
     exmlFile = os.path.join(exmlDir, u"{}Skin.exml".format(name))
 
     if os.path.exists(exmlFile) and not force:
-        print "--------------------------------------------"
-        print u"exml 文件已经存在，忽略：  {} ".format(u"{}Skin.exml".format(name))
-        print "--------------------------------------------"
+        #print "--------------------------------------------"
+        #print u"exml 文件已经存在，忽略：  {} ".format(u"{}Skin.exml".format(name))
+        #print "--------------------------------------------"
         return
 
     content = u""
@@ -263,7 +263,8 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
                 bx,by,bw,bh = getDimension(ly)
                 src = getLayerSrc(ly,depthPath)
                 s9Info = getS9Info(src)
-                content += u'{}<e:Image id="{}" x="0" y="0" width="100%" height="100%" source="{}" '.format(prefix * 3,"bg",src)
+                x, y, width, height = getDimension(ly)
+                content += u'{}<e:Image width="{}" height="{}" id="{}" source="{}" '.format(prefix * 3,width,height,"bg",src)
                 if s9Info is not None:
                     content += u'scale9Grid="{}" />\n'.format(s9Info)
                 else:
@@ -621,7 +622,7 @@ def parseDir(depthPath):
                     dpt = depthPath[:]
                     parsePsd(f,dpt)
         except Exception,e:
-            print "parseDir error:  " + e.message
+            #print "parseDir error:  " + e.message
             continue
 
 def parse():
@@ -690,7 +691,7 @@ def parseResourceFile():
                 if content["resources"] is not None:
                     for res in content["resources"]:
                         parseSingleResource(res)
-            print u"解析default.res.json文件 success......"
+            #print u"解析default.res.json文件 success......"
         except Exception,e:
             print "--------------------------------------------"
             print u"解析default.res.json文件 failed......"
@@ -964,7 +965,7 @@ def parseS9File():
         try:
             with open(absS9File,mode='r') as f:
                 s9gMap = json.load(f,encoding="utf-8")
-            print u"解析 .9 文件 success......"
+            #print u"解析 .9 文件 success......"
         except Exception,e:
             print "--------------------------------------------"
             print u"解析 .9 文件 failed......"
