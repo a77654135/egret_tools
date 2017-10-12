@@ -9,6 +9,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 import getopt
 import json
+import traceback
 from psd_tools import PSDImage,Group,Layer
 #from PSDParser import getLabelStrokeInfo,getLabelBold,getLabelItalic,getLabelSize,getLabelColor
 
@@ -159,8 +160,8 @@ def getAttrs(layer):
     try:
         if layer.name.strip():
             lst = layer.name.strip().split(r":")
-            if len(lst) <= 1:
-                return ret
+            # if len(lst) <= 1:
+            #     return ret
             name = lst[0]
             ret["clsName"] = name[1:] if name.startswith(r"$") else name
             if len(lst) > 1:
@@ -420,6 +421,16 @@ def parseButtonGroup(group,depth,depthPath,root=False):
     return genContent(group,cls,otherAttr,depth,True,depthPath)
 
 
+#解析龙骨图层组，根据命名规则，生成对应的信息
+def parseBoneGroup(group,depth,depthPath,root=False):
+    content = u""
+    for layer in group.layers:
+        #龙骨的名字
+        name = layer.name
+        x,y,_,__ = getDimension(layer)
+        content += u'{}<n:BaseBoneComponent x="{}" y="{}" boneName="{}" />\n'.format(depth * u"    ",x,y,name)
+    return content
+
 #解析特殊的图层组，根据命名规则，生成对应的信息
 def parseSpecialGroup(group,depth,depthPath,root=False):
     attrs = getAttrs(group)
@@ -430,6 +441,8 @@ def parseSpecialGroup(group,depth,depthPath,root=False):
         return parseSkinGroup(group, depth, depthPath, root)
     elif cls == "Button":
         return parseButtonGroup(group, depth, depthPath, root)
+    elif cls == "Bone":
+        return parseBoneGroup(group, depth, depthPath, root)
     elif cls.startswith(r"e_") or cls.startswith(r"n_"):
         return parseCommonGroup(group, depth, depthPath, root)
     else:
@@ -788,6 +801,7 @@ def main(argv):
     except Exception,e:
         print u"解析psd失败：" + currentPsdFile
         print e.message
+        print traceback.print_exc()
 
 def parseList(lst):
     hasKh = False
