@@ -35,7 +35,10 @@ def parseLayer(layer):
     assert isinstance(layer,Layer)
     x,y,w,h = getDimension(layer)
     global info
-    info[layer.name] = "{},{},{},{}".format(x,y,w,h)
+    name = layer.name.strip().split(" ")[0]
+    if not info.has_key(name):
+        info[name] = []
+    info[name].append("{},{},{},{}".format(x,y,w,h))
 
 
 def parseGroup(group):

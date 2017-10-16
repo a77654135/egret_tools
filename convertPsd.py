@@ -162,7 +162,7 @@ def getAttrs(layer):
             lst = layer.name.strip().split(r":")
             # if len(lst) <= 1:
             #     return ret
-            name = lst[0]
+            name = lst[0].split(" ")[0]
             ret["clsName"] = name[1:] if name.startswith(r"$") else name
             if len(lst) > 1:
                 attrs = lst[1]
@@ -327,7 +327,7 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
 #解析skinGroup
 def parseSkinGroup(group,depth,depthPath,root=False):
     layer = group.layers[0]
-    nm = layer.name.strip()
+    nm = layer.name.strip().split(" ")[0]
     x, y, width, height = getDimension(layer)
 
     otherAttr = {
@@ -367,7 +367,7 @@ def getLayerById(group,id):
 def getLayerSrc(layer,depthPath):
     assert isinstance(layer,Layer)
     names = layer.name.strip().split(r":")
-    src = r"{}_png".format(names[0])
+    src = r"{}_png".format(names[0].split(" ")[0])
     if intelligent:
         length = len(depthPath)
         if length > 0:
@@ -426,7 +426,7 @@ def parseBoneGroup(group,depth,depthPath,root=False):
     content = u""
     for layer in group.layers:
         #龙骨的名字
-        name = layer.name
+        name = layer.name.strip().split(" ")[0]
         x,y,_,__ = getDimension(layer)
         content += u'{}<n:BaseBoneComponent x="{}" y="{}" boneName="{}" />\n'.format(depth * u"    ",x,y,name)
     return content
@@ -506,7 +506,7 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
     content = u""
     prefix = depth * u"    "
     isLabel = True if layer.text_data is not None else False
-    name = layer.name.strip()
+    name = layer.name.strip().split(" ")[0]
     x,y,width,height = getDimension(layer)
     visible = layer.visible
     alpha = 1 if layer.opacity != 255 else layer.opacity / 255
