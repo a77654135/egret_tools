@@ -9,6 +9,7 @@ import xml.sax
 import re
 import json
 import datetime
+import traceback
 
 exmlDir = ""
 tsDir = ""
@@ -52,6 +53,7 @@ class ExmlHandler( xml.sax.ContentHandler):
            self.tweenIds = []
            self.isInSkin = False
 
+           #print tag
            className = attributes.getValue("class")
            self.tsName = className.replace("Skin","")
        elif re.match(r".*Button.*",tag):
@@ -339,6 +341,7 @@ def main(argv):
         parse()
     except Exception,e:
         print u"出错咯： " + e.message
+        print traceback.print_exc()
 
 def ttt():
     parser = xml.sax.make_parser()
