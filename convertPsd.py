@@ -1012,5 +1012,5 @@ def main2():
     #     print isLayerLocked(layer)
 
 if __name__ == '__main__':
-    main2()
-    #main(sys.argv[1:])
+    #main2()
+    main(sys.argv[1:])
