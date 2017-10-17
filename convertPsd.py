@@ -45,6 +45,8 @@ def getNameAndExt(fileName):
 #fileName: test.psd
 #depthPath: [folder1,folder2,folder3]
 def parsePsd(fileName,depthPath):
+    if fileName.startswith("unuse"):
+        return
     global absPsdDir
     global absSkinDir
     global force
@@ -373,7 +375,10 @@ def getLayerSrc(layer,depthPath):
     names = layer.name.strip().split(r":")
     src = r"{}_png".format(names[0].split(" ")[0])
     if intelligent:
-        src = getIntelligentSource(src,currentPsdFile)
+        length = len(depthPath)
+        if length > 0:
+            parentFolder = depthPath[length - 1]
+            src = getIntelligentSource(src, parentFolder)
     return src
 
 #如果是按钮，设置anchorOffset为中心位置，重新计算x,y坐标
@@ -509,7 +514,8 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
     content = u""
     prefix = depth * u"    "
     isLabel = True if layer.text_data is not None else False
-    name = layer.name.strip().split(" ")[0]
+    name = layer.name.strip().split(":")[0].strip().split(" ")[0].strip()
+    #name = layer.name.strip().split(" ")[0]
     x,y,width,height = getDimension(layer)
     visible = layer.visible
     alpha = 1 if layer.opacity != 255 else layer.opacity / 255
@@ -545,7 +551,10 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
     else:
         src = r"{}_png".format(name)
         if intelligent:
-            src = getLayerSrc(layer, depthPath)
+            length = len(depthPath)
+            if length > 0:
+                parentFolder = depthPath[length - 1]
+                src = getIntelligentSource(src, parentFolder)
         oldAttrs["source"] = src
         if s9gMap.has_key(name):
             oldAttrs["scale9Grid"] = s9gMap[name]

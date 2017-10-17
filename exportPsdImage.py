@@ -52,7 +52,7 @@ def parseLayer(layer,dir):
         return
     global data
     try:
-        name = layer.name.strip().split(" ")[0].strip()
+        name = layer.name.strip().split(":")[0].strip().split(" ")[0].strip()
         _,__,w,h = getDimension(layer)
         if data.has_key(name):
             attr = data[name]
@@ -64,7 +64,7 @@ def parseLayer(layer,dir):
                 layer_image = layer.as_PIL()
                 imgName = os.path.join(dir, "{}.png".format(name))
                 layer_image.save(imgName)
-                print "export png successfully.  " + (name + ".png")
+                print "export png successfully.  " + (imgName)
         else:
             d = {}
             d["w"] = w
@@ -73,7 +73,7 @@ def parseLayer(layer,dir):
             layer_image = layer.as_PIL()
             imgName = os.path.join(dir, "{}.png".format(name))
             layer_image.save(imgName)
-            print "export png successfully.  " + (name + ".png")
+            print "export png successfully.  " + (imgName)
     except Exception,e:
         pass
 
@@ -91,23 +91,33 @@ def parseFile(file,depth,fileName):
     ext = os.path.splitext(file)[-1]
     if ext != ".psd":
         return
+    if fileName.startswith("unuse"):
+        return
     global imgDir
+    global data
     psdImgDir = os.path.join(os.path.abspath(imgDir),*depth)
-    psdImgDir = os.path.join(psdImgDir,fileName.split(r".")[0])
-    if os.path.exists(psdImgDir):
-        shutil.rmtree(psdImgDir)
+    #psdImgDir = os.path.join(psdImgDir,fileName.split(r".")[0])
+    # try:
+    #     if os.path.exists(psdImgDir):
+    #         shutil.rmtree(psdImgDir)
+    # except:
+    #     pass
     if not os.path.exists(psdImgDir):
         os.makedirs(psdImgDir)
     psd = PSDImage.load(file)
     parseGroup(psd,psdImgDir)
 
 def walkDir(dir,depth):
+    global data
+    data = {}
     for f in os.listdir(dir):
         path = os.path.join(dir,f)
+        dph = depth[:]
         if os.path.isfile(path):
-            parseFile(path,depth[:],f)
+            parseFile(path,dph,f)
         elif os.path.isdir(path):
-            walkDir(path,depth[:])
+            dph.append(f)
+            walkDir(path,dph)
 
 def parse():
     global psdDir
