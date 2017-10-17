@@ -158,18 +158,20 @@ def getAttrs(layer):
     assert isinstance(layer,Layer) or isinstance(layer,Group)
     ret = {}
     try:
-        if layer.name.strip():
+        if layer.name:
             lst = layer.name.strip().split(r":")
             # if len(lst) <= 1:
             #     return ret
-            name = lst[0].split(" ")[0]
+            name = lst[0].split(" ")[0].strip()
+            #print name
             ret["clsName"] = name[1:] if name.startswith(r"$") else name
             if len(lst) > 1:
-                attrs = lst[1]
+                attrs = lst[1].strip().split(" ")[0].strip()
                 if attrs.endswith(r";"):
                     attrs = attrs.rstrip(r";")
                 for attr in attrs.split(r";"):
                     k,v = attr.split(r"=")
+                    #print k,v
                     ret[k] = v
             return ret
         else:
@@ -1010,5 +1012,5 @@ def main2():
     #     print isLayerLocked(layer)
 
 if __name__ == '__main__':
-    #main2()
-    main(sys.argv[1:])
+    main2()
+    #main(sys.argv[1:])
