@@ -264,7 +264,7 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
         for idx,ly in enumerate(layers):
             if idx == 0:
                 bx,by,bw,bh = getDimension(ly)
-                src = getLayerSrc(ly,depthPath)
+                src = getLayerSrc(ly,depthPath[:])
                 s9Info = getS9Info(src)
                 x, y, width, height = getDimension(ly)
                 content += u'{}<e:Image width="{}" height="{}" id="{}" source="{}" '.format(prefix * 3,width,height,"bg",src)
@@ -368,13 +368,12 @@ def getLayerById(group,id):
 #获取图层的资源属性
 def getLayerSrc(layer,depthPath):
     assert isinstance(layer,Layer)
+    global intelligent
+    global currentPsdFile
     names = layer.name.strip().split(r":")
     src = r"{}_png".format(names[0].split(" ")[0])
     if intelligent:
-        length = len(depthPath)
-        if length > 0:
-            parentFolder = depthPath[length - 1]
-            src = getIntelligentSource(src, parentFolder)
+        src = getIntelligentSource(src,currentPsdFile)
     return src
 
 #如果是按钮，设置anchorOffset为中心位置，重新计算x,y坐标
@@ -426,11 +425,13 @@ def parseButtonGroup(group,depth,depthPath,root=False):
 #解析龙骨图层组，根据命名规则，生成对应的信息
 def parseBoneGroup(group,depth,depthPath,root=False):
     content = u""
+    content += u'{}<e:Group y="0" height="100%" width="100%" touchEnabled="false" x="0" touchChildren="false" >\n'.format(depth * u"    ")
     for layer in group.layers:
         #龙骨的名字
-        name = layer.name.strip().split(" ")[0]
+        name = layer.name.strip().split(" ")[0].replace("_tex","")
         x,y,_,__ = getDimension(layer)
-        content += u'{}<n:BaseBoneComponent x="{}" y="{}" boneName="{}" />\n'.format(depth * u"    ",x,y,name)
+        content += u'{}<n:BaseBoneComponent x="{}" y="{}" boneName="{}" />\n'.format(((depth + 1)* u"    "),x,y,name)
+    content += u'{}</e:Group>\n'.format(depth * u"    ")
     return content
 
 #解析特殊的图层组，根据命名规则，生成对应的信息
@@ -544,10 +545,7 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
     else:
         src = r"{}_png".format(name)
         if intelligent:
-            length = len(depthPath)
-            if length > 0:
-                parentFolder = depthPath[length - 1]
-                src = getIntelligentSource(src, parentFolder)
+            src = getLayerSrc(layer, depthPath)
         oldAttrs["source"] = src
         if s9gMap.has_key(name):
             oldAttrs["scale9Grid"] = s9gMap[name]
@@ -706,7 +704,7 @@ def parseResourceFile():
                 if content["resources"] is not None:
                     for res in content["resources"]:
                         parseSingleResource(res)
-            #print u"解析default.res.json文件 success......"
+            print u"解析default.res.json文件 success......"
         except Exception,e:
             print "--------------------------------------------"
             print u"解析default.res.json文件 failed......"

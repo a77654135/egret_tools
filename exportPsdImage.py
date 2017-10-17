@@ -5,6 +5,7 @@ import getopt
 import sys
 import traceback
 import json
+import shutil
 from psd_tools import PSDImage,Layer,Group
 
 psdDir = ""
@@ -82,6 +83,8 @@ def parseGroup(group,dir):
         if isinstance(layer,Layer):
             parseLayer(layer,dir)
         elif isinstance(layer,Group):
+            if layer.name.strip() == "$Bone":
+                continue
             parseGroup(layer,dir)
 
 def parseFile(file,depth,fileName):
@@ -91,6 +94,8 @@ def parseFile(file,depth,fileName):
     global imgDir
     psdImgDir = os.path.join(os.path.abspath(imgDir),*depth)
     psdImgDir = os.path.join(psdImgDir,fileName.split(r".")[0])
+    if os.path.exists(psdImgDir):
+        shutil.rmtree(psdImgDir)
     if not os.path.exists(psdImgDir):
         os.makedirs(psdImgDir)
     psd = PSDImage.load(file)
