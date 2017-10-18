@@ -400,7 +400,7 @@ def parseButtonGroup(group,depth,depthPath,root=False):
     attrs = getAttrs(group)
     if attrs.has_key("id"):
         otherAttr["name"] = attrs["id"]
-    otherAttr["skinName"] = "SimpleButtonSkin"
+    # otherAttr["skinName"] = "SimpleButtonSkin"
     if length > 0:
         bgLayer = layers[length-1]
         src = getLayerSrc(bgLayer, depthPath)
