@@ -237,72 +237,95 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
     content = u""
 
     if isButton:
-        content += u"{0}<{1} ".format(prefix, clz)
+        if len(layer.layers) == 1:
+            content += u"{0}<{1} ".format(prefix, "n:SimpleButton")
 
-        if newAttrs.has_key("x"):
-            content += u'{0}="{1}" '.format("x", newAttrs["x"])
-        if newAttrs.has_key("y"):
-            content += u'{0}="{1}" '.format("y", newAttrs["y"])
-        if newAttrs.has_key("width"):
-            content += u'{0}="{1}" '.format("width", newAttrs["width"])
-        if newAttrs.has_key("height"):
-            content += u'{0}="{1}" '.format("height", newAttrs["height"])
-        if newAttrs.has_key("id"):
-            content += u'{0}="{1}" '.format("id", newAttrs["id"])
-        if newAttrs.has_key("name"):
-            content += u'{0}="{1}" '.format("name", newAttrs["name"])
+            if newAttrs.has_key("x"):
+                content += u'{0}="{1}" '.format("x", newAttrs["x"])
+            if newAttrs.has_key("y"):
+                content += u'{0}="{1}" '.format("y", newAttrs["y"])
+            if newAttrs.has_key("width"):
+                content += u'{0}="{1}" '.format("width", newAttrs["width"])
+            if newAttrs.has_key("height"):
+                content += u'{0}="{1}" '.format("height", newAttrs["height"])
+            if newAttrs.has_key("id"):
+                content += u'{0}="{1}" '.format("id", newAttrs["id"])
+            if newAttrs.has_key("name"):
+                content += u'{0}="{1}" '.format("name", newAttrs["name"])
+            if newAttrs.has_key("anchorOffsetX"):
+                content += u'{0}="{1}" '.format("anchorOffsetX", newAttrs["anchorOffsetX"])
+            if newAttrs.has_key("anchorOffsetY"):
+                content += u'{0}="{1}" '.format("anchorOffsetY", newAttrs["anchorOffsetY"])
+            if newAttrs.has_key("bgSource"):
+                content += u'{0}="{1}" '.format("source", newAttrs["bgSource"])
+            content += u'/>'
+        else:
+            content += u"{0}<{1} ".format(prefix, clz)
 
-        for k, v in newAttrs.iteritems():
-            if k == "clsName":
-                continue
-            if k in ("x","y","width","height","id","name"):
-                continue
-            content += u'{0}="{1}" '.format(k, v)
-        content += u">\n"
+            if newAttrs.has_key("x"):
+                content += u'{0}="{1}" '.format("x", newAttrs["x"])
+            if newAttrs.has_key("y"):
+                content += u'{0}="{1}" '.format("y", newAttrs["y"])
+            if newAttrs.has_key("width"):
+                content += u'{0}="{1}" '.format("width", newAttrs["width"])
+            if newAttrs.has_key("height"):
+                content += u'{0}="{1}" '.format("height", newAttrs["height"])
+            if newAttrs.has_key("id"):
+                content += u'{0}="{1}" '.format("id", newAttrs["id"])
+            if newAttrs.has_key("name"):
+                content += u'{0}="{1}" '.format("name", newAttrs["name"])
 
-        content += u"{}<e:skinName><e:Skin>\n".format(prefix*2)
-
-        bx,by,bw,bh = 0,0,0,0
-        layers = layer.layers
-        layers.reverse()
-        for idx,ly in enumerate(layers):
-            if idx == 0:
-                bx,by,bw,bh = getDimension(ly)
-                src = getLayerSrc(ly,depthPath[:])
-                s9Info = getS9Info(src)
-                x, y, width, height = getDimension(ly)
-                content += u'{}<e:Image width="{}" height="{}" id="{}" source="{}" '.format(prefix * 3,width,height,"bg",src)
-                if s9Info is not None:
-                    content += u'scale9Grid="{}" />\n'.format(s9Info)
-                else:
-                    content += u'/>\n'
-            else:
-                if isLayerLocked(ly):
-                    # 图层被锁定，不解析
+            for k, v in newAttrs.iteritems():
+                if k == "clsName":
                     continue
-                if isinstance(ly, Layer):
-                    content += parseLayer(ly, depth + 2, depthPath[:],[bx,by])
+                if k in ("x", "y", "width", "height", "id", "name"):
+                    continue
+                content += u'{0}="{1}" '.format(k, v)
+            content += u">\n"
 
+            content += u"{}<e:skinName><e:Skin>\n".format(prefix * 2)
 
-        # if otherAttr.has_key("bgSource"):
-        #     src = otherAttr["bgSource"]
-        #     s9Info = getS9Info(src)
-        #     #print "src:  {}   info:{}  ".format(src,s9Info)
-        #     if s9Info is not None:
-        #         content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "bg",src,s9Info)
-        #     else:
-        #         content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}"/>\n'.format(prefix * 3, "bg",src)
-        # if otherAttr.has_key("iconSource"):
-        #     src = otherAttr["iconSource"]
-        #     s9Info = getS9Info(src)
-        #     #print "src:  {}   info:{}  ".format(src, s9Info)
-        #     if s9Info is not None:
-        #         content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "icon",src,s9Info)
-        #     else:
-        #         content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}"/>\n'.format(prefix * 3, "icon", src)
+            bx, by, bw, bh = 0, 0, 0, 0
+            layers = layer.layers
+            layers.reverse()
+            for idx, ly in enumerate(layers):
+                if idx == 0:
+                    bx, by, bw, bh = getDimension(ly)
+                    src = getLayerSrc(ly, depthPath[:])
+                    s9Info = getS9Info(src)
+                    x, y, width, height = getDimension(ly)
+                    content += u'{}<e:Image width="{}" height="{}" id="{}" source="{}" '.format(prefix * 3, width,
+                                                                                                height, "bg", src)
+                    if s9Info is not None:
+                        content += u'scale9Grid="{}" />\n'.format(s9Info)
+                    else:
+                        content += u'/>\n'
+                else:
+                    if isLayerLocked(ly):
+                        # 图层被锁定，不解析
+                        continue
+                    if isinstance(ly, Layer):
+                        content += parseLayer(ly, depth + 2, depthPath[:], [bx, by])
 
-        content += u'{}</e:Skin></e:skinName>\n'.format(prefix*2)
-        content += u"{}</{}>".format(prefix,clz)
+            # if otherAttr.has_key("bgSource"):
+            #     src = otherAttr["bgSource"]
+            #     s9Info = getS9Info(src)
+            #     #print "src:  {}   info:{}  ".format(src,s9Info)
+            #     if s9Info is not None:
+            #         content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "bg",src,s9Info)
+            #     else:
+            #         content += u'{}<e:Image id="{}" width="100%" height="100%" source="{}"/>\n'.format(prefix * 3, "bg",src)
+            # if otherAttr.has_key("iconSource"):
+            #     src = otherAttr["iconSource"]
+            #     s9Info = getS9Info(src)
+            #     #print "src:  {}   info:{}  ".format(src, s9Info)
+            #     if s9Info is not None:
+            #         content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}" scale9Grid="{}" />\n'.format(prefix * 3, "icon",src,s9Info)
+            #     else:
+            #         content += u'{}<e:Image id="{}" horizontalCenter="0" verticalCenter="0" source="{}"/>\n'.format(prefix * 3, "icon", src)
+
+            content += u'{}</e:Skin></e:skinName>\n'.format(prefix * 2)
+            content += u"{}</{}>".format(prefix, clz)
     else:
         content += u"{0}<{1} ".format(prefix, clz)
 
