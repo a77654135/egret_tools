@@ -217,11 +217,13 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
         x,y,width,height = getDimension(layer.layers[0])
         x,y = getCenterPos(x,y,width,height)
     oldAttrs = {
-        "x": x,
-        "y": y,
         "width": width,
         "height": height
     }
+    if x:
+        oldAttrs["x"] = x
+    if y:
+        oldAttrs["y"] = y
     if isButton:
         oldAttrs["anchorOffsetX"] = int(width * 0.5)
         oldAttrs["anchorOffsetY"] = int(height * 0.5)
@@ -336,11 +338,13 @@ def parseSkinGroup(group,depth,depthPath,root=False):
 
     otherAttr = {
         "skinName": nm + "Skin",
-        "x": x,
-        "y": y,
         "width": width,
         "height": height
     }
+    if x:
+        otherAttr["x"] = x
+    if y:
+        otherAttr["y"] = y
     return genContent(group,r"e:Panel",otherAttr,depth)
 
 #解析其他命名group，扩展group的功能，允许自定义
@@ -471,8 +475,6 @@ def parseGroup(group,depth,depthPath,root=False):
     prefix = depth * u"    "
     if root == False:
         oldAttrs = {
-            "x": "0",
-            "y": "0",
             "width": "100%",
             "height": "100%",
             "touchEnabled":"false",
