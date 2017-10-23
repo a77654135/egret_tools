@@ -67,7 +67,7 @@ def exportImage(group):
     if not os.path.exists(pngDir):
         os.makedirs(pngDir)
     for layer in group.layers:
-        buildingName = r"building_{}_{}_{}.png".format(currentPsdName,group.name.strip(),layer.name.strip())
+        buildingName = r"{}_{}_{}.png".format(currentPsdName,group.name.strip(),layer.name.strip())
         pngFile = os.path.join(pngDir,buildingName)
         layer_image = layer.as_PIL()
         layer_image.save(pngFile)
@@ -77,6 +77,9 @@ def exportDimesion(layer,grpName=None,isRight=False):
     global data
     global groundData
     global currentPsdName
+
+    #print "exportDimesion:   " + grpName
+
     if isinstance(layer,Layer):
         layerName = layer.name.strip()
         if layerName.startswith("ground"):
@@ -87,16 +90,19 @@ def exportDimesion(layer,grpName=None,isRight=False):
             groundData["height"] = h
     elif isinstance(layer,Group):
         for l in layer.layers:
-            pos = "right" if isRight else "left"
+            if isLayerLocked(l):
+                continue
+            pos = "r" if isRight else "l"
             ids = grpName.split("_")
             layerName = l.name.strip()
             x, y, w, h = getDimension(layer)
-            src = "building_{}_{}_{}_png".format(currentPsdName,grpName,layerName)
+            src = "{}_{}_{}_png".format(currentPsdName,grpName,layerName)
             for id in ids:
-                name = "building_{}_{}_{}_{}".format(currentPsdName, id, layerName, pos)
+                #print ids
+                name = "{}_{}_{}_{}".format(currentPsdName, id, layerName, pos)
                 data[name] = OrderedDict()
-                data[name]["offsetX"] = x
-                data[name]["offsetY"] = y
+                data[name]["ox"] = x
+                data[name]["oy"] = y
                 data[name]["width"] = w
                 data[name]["height"] = h
                 data[name]["source"] = src
@@ -106,19 +112,19 @@ def parseJson():
     global groundData
     for k in data:
         buildingData = data[k]
-        buildingData["offsetX"] = buildingData["offsetX"] - groundData["x"]
-        buildingData["offsetY"] = buildingData["offsetY"] - groundData["y"]
+        buildingData["ox"] = buildingData["ox"] - groundData["x"]
+        buildingData["oy"] = buildingData["oy"] - groundData["y"]
 
 def parsePsd(group):
     for layer in group.layers:
         if isLayerLocked(layer):
-            return
+            continue
         if isinstance(layer,Layer):
             exportDimesion(layer)
         elif isinstance(layer,Group):
             grpName = layer.name.strip()
             lst = grpName.split(r":")
-            if len(lst) > 1 and lst[1] == "right":
+            if len(lst) > 1 and (lst[1] == "right" or lst[1] == "r"):
                 exportDimesion(layer,lst[0],True)
             else:
                 exportImage(layer)
