@@ -501,7 +501,7 @@ def parseGroup(group,depth,depthPath,root=False):
             "width": "100%",
             "height": "100%",
             "touchEnabled":"false",
-            "touchChildren":"false"
+            "touchChildren":"true"
         }
         attrs = getAttrs(group)
         newAttrs = mergeAttr(oldAttrs, attrs)
