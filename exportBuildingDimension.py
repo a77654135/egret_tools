@@ -86,8 +86,8 @@ def exportDimesion(layer,grpName=None,isRight=False):
             x, y, w, h = getDimension(layer)
             groundData["x"] = x
             groundData["y"] = y
-            groundData["width"] = w
-            groundData["height"] = h
+            groundData["w"] = w
+            groundData["h"] = h
     elif isinstance(layer,Group):
         for l in layer.layers:
             if isLayerLocked(l):
@@ -95,7 +95,7 @@ def exportDimesion(layer,grpName=None,isRight=False):
             pos = "r" if isRight else "l"
             ids = grpName.split("_")
             layerName = l.name.strip()
-            x, y, w, h = getDimension(layer)
+            x, y, w, h = getDimension(l)
             src = "{}_{}_{}_png".format(currentPsdName,grpName,layerName)
             for id in ids:
                 #print ids
@@ -103,17 +103,27 @@ def exportDimesion(layer,grpName=None,isRight=False):
                 data[name] = OrderedDict()
                 data[name]["ox"] = x
                 data[name]["oy"] = y
-                data[name]["width"] = w
-                data[name]["height"] = h
-                data[name]["source"] = src
+                data[name]["w"] = w
+                data[name]["h"] = h
+                data[name]["s"] = src
+                if isRight:
+                    data[name]["sx"] = -1
 
 def parseJson():
     global data
     global groundData
     for k in data:
         buildingData = data[k]
-        buildingData["ox"] = buildingData["ox"] - groundData["x"]
-        buildingData["oy"] = buildingData["oy"] - groundData["y"]
+        if buildingData.has_key("sx"):
+            del buildingData["sx"]
+            # buildingData["aox"] = groundData["x"] + groundData["w"] / 2 - buildingData["ox"]
+            # buildingData["ox"] = buildingData["ox"] + buildingData["aox"] - groundData["x"]
+            buildingData["ox"] = buildingData["ox"] - groundData["x"] + buildingData["w"] - 5
+            buildingData["oy"] = buildingData["oy"] - groundData["y"] - 5
+        else:
+            buildingData["ox"] = buildingData["ox"] - groundData["x"]
+            buildingData["oy"] = buildingData["oy"] - groundData["y"]
+
 
 def parsePsd(group):
     for layer in group.layers:
