@@ -19,6 +19,8 @@ dstFile = ""
 ignoreFile = ""
 ignoreList = []
 expectedFile = ""
+isPanel = 0
+isRenderItem = 0
 
 
 
@@ -81,6 +83,8 @@ class ExmlHandler( xml.sax.ContentHandler):
        for item in self.ids:
            id = item[0]
            tag = item[1]
+           if tag == "n:SimpleButton" or tag == "n:BaseButton":
+               continue
            tags = tag.split(":")
            cls = u""
            if tags[0] == "e":
@@ -98,14 +102,20 @@ class ExmlHandler( xml.sax.ContentHandler):
        return content
 
    def getIdEvents(self):
+       global isPanel
        content = u""
 
-       content += u"    private onClick(e: egret.TouchEvent) {\n"
-       content += u"        var name = e.target.name;\n"
-       #content += u"        var name = target.name;\n"
+       if isPanel:
+           content += u"    protected onClick(name: string) {\n"
+       else:
+           content += u"    private onClick(e: egret.TouchEvent) {\n"
+           content += u"        var name = e.target.name;\n"
+
        content += u"        switch(name) {\n"
 
        for name in self.buttonNames:
+           if isPanel and name=="close" or name == "closeBtn":
+               continue
            content += u'            case "%s":\n' % name
            content += u"                this.on%sClick();\n" % name.capitalize()
            content += u"                break;\n"
@@ -115,6 +125,8 @@ class ExmlHandler( xml.sax.ContentHandler):
        content += u"\n"
 
        for name in self.buttonNames:
+           if isPanel and name=="close" or name == "closeBtn":
+               continue
            content += u"    private on%sClick() {\n" % name.capitalize()
            content += u"\n"
            content += u"    }\n"
@@ -135,81 +147,189 @@ class ExmlHandler( xml.sax.ContentHandler):
 
    def getContent(self,hasButton):
        #print "getContent............."
+       global isPanel
+       global isRenderItem
+
+       print isPanel
+       print isRenderItem
+
        content = u""
        content += u"/**\n"
        content += u"* author:talus\n"
        content += u"* date:{}\n".format(datetime.date.today())
        content += u"*/\n"
 
-       if not hasButton:
-           content += u"class %s extends eui.Component {" % self.tsName
-           content += u"\n"
-           content += u"    private disposed: boolean = false;\n"
-           content += self.getIdContent()
-           content += u"\n"
-           content += u""
-           content += u"    public constructor() {\n"
-           content += u"        super();\n"
-           content += u"        this.skinName = %sSkin;\n" % self.tsName
-           content += u"        this.init();\n"
-           content += u"    }\n"
-           content += u"\n"
-           content += u"    public init() {\n"
-           content += u"        this.disposed = false;\n"
-           content += u"        this.addEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
-           content += u"    }\n"
-           content += u"\n"
-           content += u"    /**\n"
-           content += u"    * 清理资源\n"
-           content += u"    * 手动调用或者从显示列表移除时自动调用\n"
-           content += u"    */\n"
-           content += u"    public dispose() {\n"
-           content += u"        if (this.disposed) {\n"
-           content += u"            return;\n"
-           content += u"        }\n"
-           content += u"        this.disposed = true;\n"
-           content += u"\n"
-           content += self.getTweenContent()
-           content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
-           content += u"        DisplayUtil.removeFromParent(this);\n"
-           content += u"    }\n"
-           content += u"}\n"
-       else:
-           content += u"class %s extends eui.Component {\n" % self.tsName
-           content += u"    private disposed: boolean = false;\n"
-           content += self.getIdContent()
-           content += u"\n"
-           content += u"    public constructor() {\n"
-           content += u"        super();\n"
-           content += u"        this.skinName = %sSkin;\n" % self.tsName
-           content += u"        this.init();\n"
-           content += u"    }\n"
-           content += u"\n"
-           content += u"    public init() {\n"
-           content += u"        this.disposed = false;\n"
-           content += u"        this.addEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
-           content += u"        this.addEventListener(egret.TouchEvent.TOUCH_TAP,this.onClick,this);\n"
-           content += u"    }\n"
-           content += u"\n"
-           content += self.getIdEvents()
-           content += u"\n"
+       if isPanel:
+           if not hasButton:
+               content += u"class %s extends BasePanel {" % self.tsName
+               content += u"\n"
+               content += self.getIdContent()
+               content += u"\n"
+               content += u""
+               content += u"    public constructor() {\n"
+               content += u"        super();\n"
+               content += u"        this.skinName = %sSkin;\n" % self.tsName
+               content += u"        this.layer = PanelLayer.BOTTOM_LAYER;\n"
+               content += u"        this.mutex = true;\n"
+               content += u"    }\n"
+               content += u"\n"
+               content += u"    public active() {\n"
+               content += u"        \n"
+               content += u"    }\n"
+               content += u"\n"
+               content += u"    /**\n"
+               content += u"    * 清理资源\n"
+               content += u"    * 手动调用或者从显示列表移除时自动调用\n"
+               content += u"    */\n"
+               content += u"    public dispose() {\n"
+               content += self.getTweenContent()
+               content += u"        super.dispose();\n"
+               content += u"    }\n"
+               content += u"}\n"
+           else:
+               content += u"class %s extends BasePanel {\n" % self.tsName
+               content += self.getIdContent()
+               content += u"\n"
+               content += u"    public constructor() {\n"
+               content += u"        super();\n"
+               content += u"        this.skinName = %sSkin;\n" % self.tsName
+               content += u"        this.layer = PanelLayer.BOTTOM_LAYER;\n"
+               content += u"        this.mutex = true;\n"
+               content += u"    }\n"
+               content += u"\n"
+               content += u"    public active() {\n"
+               content += u"        \n"
+               content += u"    }\n"
+               content += u"\n"
+               content += self.getIdEvents()
+               content += u"\n"
 
-           content += u"    /**\n"
-           content += u"    * 清理资源\n"
-           content += u"    * 手动调用或者从显示列表移除时自动调用\n"
-           content += u"    */\n"
-           content += u"    public dispose() {\n"
-           content += u"        if (this.disposed) {\n"
-           content += u"            return;\n"
-           content += u"        }\n"
-           content += u"        this.disposed = true;\n"
-           content += u"\n"
-           content += self.getTweenContent()
-           content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
-           content += u"        this.removeEventListener(egret.TouchEvent.TOUCH_TAP,this.onClick,this);\n"
-           content += u"        DisplayUtil.removeFromParent(this);\n"
-           content += u"    }\n"
-           content += u"}\n"
+               content += u"    /**\n"
+               content += u"    * 清理资源\n"
+               content += u"    * 手动调用或者从显示列表移除时自动调用\n"
+               content += u"    */\n"
+               content += u"    public dispose() {\n"
+               content += self.getTweenContent()
+               content += u"        super.dispose();\n"
+               content += u"    }\n"
+               content += u"}\n"
+       elif isRenderItem:
+           if not hasButton:
+               content += u"class %s extends eui.ItemRenderer {" % self.tsName
+               content += u"\n"
+               content += self.getIdContent()
+               content += u"\n"
+               content += u""
+               content += u"    public constructor() {\n"
+               content += u"        super();\n"
+               content += u"        this.skinName = %sSkin;\n" % self.tsName
+               content += u"        this.addEventListener(egret.Event.REMOVED_FROM_STAGE, this.dispose, this);\n"
+               content += u"    }\n"
+               content += u"\n"
+               content += u"    protected dataChanged() {\n"
+               content += u"        super.dataChanged();\n"
+               content += u"        \n"
+               content += u"    }\n"
+               content += u"\n"
+               content += u"    public dispose() {\n"
+               content += self.getTweenContent()
+               content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
+               content += u"    }\n"
+               content += u"}\n"
+           else:
+               content += u"class %s extends eui.ItemRenderer {" % self.tsName
+               content += u"\n"
+               content += self.getIdContent()
+               content += u"\n"
+               content += u""
+               content += u"    public constructor() {\n"
+               content += u"        super();\n"
+               content += u"        this.skinName = %sSkin;\n" % self.tsName
+               content += u"        this.addEventListener(egret.Event.REMOVED_FROM_STAGE, this.dispose, this);\n"
+               content += u"    }\n"
+               content += u"\n"
+               content += u"    protected dataChanged() {\n"
+               content += u"        super.dataChanged();\n"
+               content += u"        \n"
+               content += u"    }\n"
+               content += u"\n"
+               content += self.getIdEvents()
+               content += u"\n"
+               content += u"    public dispose() {\n"
+               content += self.getTweenContent()
+               content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
+               content += u"    }\n"
+               content += u"}\n"
+       else:
+           if not hasButton:
+               content += u"class %s extends eui.Component {" % self.tsName
+               content += u"\n"
+               content += u"    private disposed: boolean = false;\n"
+               content += self.getIdContent()
+               content += u"\n"
+               content += u""
+               content += u"    public constructor() {\n"
+               content += u"        super();\n"
+               content += u"        this.skinName = %sSkin;\n" % self.tsName
+               content += u"        this.init();\n"
+               content += u"    }\n"
+               content += u"\n"
+               content += u"    public init() {\n"
+               content += u"        this.disposed = false;\n"
+               content += u"        this.addEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
+               content += u"    }\n"
+               content += u"\n"
+               content += u"    /**\n"
+               content += u"    * 清理资源\n"
+               content += u"    * 手动调用或者从显示列表移除时自动调用\n"
+               content += u"    */\n"
+               content += u"    public dispose() {\n"
+               content += u"        if (this.disposed) {\n"
+               content += u"            return;\n"
+               content += u"        }\n"
+               content += u"        this.disposed = true;\n"
+               content += u"\n"
+               content += self.getTweenContent()
+               content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
+               content += u"        DisplayUtil.removeFromParent(this);\n"
+               content += u"    }\n"
+               content += u"}\n"
+           else:
+               content += u"class %s extends eui.Component {\n" % self.tsName
+               content += u"    private disposed: boolean = false;\n"
+               content += self.getIdContent()
+               content += u"\n"
+               content += u"    public constructor() {\n"
+               content += u"        super();\n"
+               content += u"        this.skinName = %sSkin;\n" % self.tsName
+               content += u"        this.init();\n"
+               content += u"    }\n"
+               content += u"\n"
+               content += u"    public init() {\n"
+               content += u"        this.disposed = false;\n"
+               content += u"        this.addEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
+               content += u"        this.addEventListener(egret.TouchEvent.TOUCH_TAP,this.onClick,this);\n"
+               content += u"    }\n"
+               content += u"\n"
+               content += self.getIdEvents()
+               content += u"\n"
+
+               content += u"    /**\n"
+               content += u"    * 清理资源\n"
+               content += u"    * 手动调用或者从显示列表移除时自动调用\n"
+               content += u"    */\n"
+               content += u"    public dispose() {\n"
+               content += u"        if (this.disposed) {\n"
+               content += u"            return;\n"
+               content += u"        }\n"
+               content += u"        this.disposed = true;\n"
+               content += u"\n"
+               content += self.getTweenContent()
+               content += u"        this.removeEventListener(egret.Event.REMOVED_FROM_STAGE,this.dispose,this);\n"
+               content += u"        this.removeEventListener(egret.TouchEvent.TOUCH_TAP,this.onClick,this);\n"
+               content += u"        DisplayUtil.removeFromParent(this);\n"
+               content += u"    }\n"
+               content += u"}\n"
 
        return content
 
@@ -249,6 +369,7 @@ def walkDir(dir,parser,depthPath):
     global ignoreList
     global expectedFile
 
+    #print "waldDir:  " + dir
     for name in os.listdir(dir):
         if expectedFile == "" and name in ignoreList:
             continue
@@ -311,17 +432,19 @@ def main(argv):
     global tsDir
     global ignoreFile
     global expectedFile
+    global isPanel
+    global isRenderItem
     try:
-        opts, args = getopt.getopt(argv, "e:t:i:", ["exmlDir=", "tsDir=","ignore=","expectedFile="])
+        opts, args = getopt.getopt(argv, "e:t:i:", ["exmlDir=", "tsDir=","ignore=","expectedFile=","panel=","render="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'convertPsd -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
+        print 'convertPsd -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile --panel --render'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'convertPsd -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile'
+            print 'convertPsd -e <exmlDir> -t <tsDir> -i <ignoreFileJson> --expectedFile --panel --render'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-e", "--exmlDir"):
@@ -332,6 +455,13 @@ def main(argv):
             ignoreFile = os.path.abspath(arg)
         elif opt in ("--expectedFile",):
             expectedFile = arg
+        elif opt in ("--panel",):
+            isPanel = int(arg)
+        elif opt in ("--render",):
+            isRenderItem = int(arg)
+
+    # print "ispanel:  %s" % isPanel
+    # print "ispanel:  %s" % isRenderItem
 
     # exmlDir = r"C:\work\N5\roll\client\client\resource\skins"
     # tsDir = r"C:\work\N5\roll\client\client\src\game\view"
@@ -340,7 +470,6 @@ def main(argv):
         parseIgnore()
         parse()
     except Exception,e:
-        print u"出错咯： " + e.message
         print traceback.print_exc()
 
 def ttt():
