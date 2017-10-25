@@ -150,9 +150,6 @@ class ExmlHandler( xml.sax.ContentHandler):
        global isPanel
        global isRenderItem
 
-       print isPanel
-       print isRenderItem
-
        content = u""
        content += u"/**\n"
        content += u"* author:talus\n"

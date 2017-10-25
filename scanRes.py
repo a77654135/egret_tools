@@ -1,4 +1,4 @@
-import os,json,getopt,sys
+import os,json,getopt,sys,traceback
 
 class Utils:
 
@@ -255,6 +255,7 @@ class Scanner:
             fp.close()
         except Exception,e:
             print "dump json file error: " + e.message
+            print traceback.print_exc()
 
 
 def main(argv):
