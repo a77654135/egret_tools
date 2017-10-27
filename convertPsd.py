@@ -213,8 +213,8 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
 
     x, y, width, height = getDimension(layer)
     if isButton:
-        assert len(layer.layers) > 0
-        x,y,width,height = getDimension(layer.layers[0])
+        #assert len(layer.layers) > 0
+        #x,y,width,height = getDimension(layer.layers[0])
         x,y = getCenterPos(x,y,width,height)
     oldAttrs = {
         "width": width,
@@ -1034,7 +1034,7 @@ def main2():
     #print getLayerStroke(psd.layers[4])
     global absPsdDir
     global absSkinDir
-    dir = r"C:\work\N5\roll\art\testPsd"
+    dir = r"F:\work\n5\roll\art\testPsd"
     absPsdDir = os.path.abspath(dir)
     absSkinDir = absPsdDir
     parseDir([])
