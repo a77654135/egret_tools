@@ -67,7 +67,15 @@ def exportImage(group):
     if not os.path.exists(pngDir):
         os.makedirs(pngDir)
     for layer in group.layers:
-        buildingName = r"{}_{}_{}.png".format(currentPsdName,group.name.strip(),layer.name.strip())
+        layerName = layer.name.strip()
+        sd = "s"
+        layerName = layerName.split(":")
+        if len(layerName) > 1:
+            sd = "d"
+        layerName = layerName[0]
+        layerName = layerName.split("-")
+        layerName = "_".join(layerName)
+        buildingName = r"{}_{}_{}_{}.png".format(currentPsdName,group.name.strip(),layerName,sd)
         pngFile = os.path.join(pngDir,buildingName)
         layer_image = layer.as_PIL()
         layer_image.save(pngFile)
@@ -94,20 +102,39 @@ def exportDimesion(layer,grpName=None,isRight=False):
                 continue
             pos = "r" if isRight else "l"
             ids = grpName.split("_")
-            layerName = l.name.strip()
+            sd = "s"
+            layerNames = l.name.strip().split(":")
+            if len(layerNames) > 1:
+                sd = "d"
+            else:
+                sd = "s"
+            layerNames = layerNames[0]
+
+            layerNames = layerNames.split("-")
+            if len(layerNames) == 1:
+                imgName = layerNames[0]
+                lvs = [imgName]
+            else:
+                imgName = "_".join(layerNames)
+                lvs = range(int(layerNames[0]),(int(layerNames[1]) + 1))
+
             x, y, w, h = getDimension(l)
-            src = "{}_{}_{}_png".format(currentPsdName,grpName,layerName)
-            for id in ids:
-                #print ids
-                name = "{}_{}_{}_{}".format(currentPsdName, id, layerName, pos)
-                data[name] = OrderedDict()
-                data[name]["ox"] = x
-                data[name]["oy"] = y
-                data[name]["w"] = w
-                data[name]["h"] = h
-                data[name]["s"] = src
-                if isRight:
-                    data[name]["sx"] = -1
+            src = "{}_{}_{}_{}_png".format(currentPsdName, grpName, imgName,sd)
+            for lv in lvs:
+                for id in ids:
+                    # print ids
+                    name = "{}_{}_{}_{}".format(currentPsdName, id, lv, pos)
+                    data[name] = OrderedDict()
+                    data[name]["ox"] = x
+                    data[name]["oy"] = y
+                    data[name]["w"] = w
+                    data[name]["h"] = h
+                    data[name]["s"] = src
+                    #print src
+                    if isRight:
+                        data[name]["sx"] = -1
+
+
 
 def parseJson():
     global data
@@ -172,7 +199,7 @@ def parse():
     parseJson()
     if jsonFile:
         with open(os.path.abspath(jsonFile),"w") as f:
-            json.dump(data,f,indent=4)
+            json.dump(data,f, indent=4)
             print "export json ok."
 
 
