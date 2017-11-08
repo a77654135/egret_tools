@@ -458,11 +458,22 @@ def parseButtonGroup(group,depth,depthPath,root=False):
 def parseBoneGroup(group,depth,depthPath,root=False):
     content = u""
     content += u'{}<e:Group y="0" height="100%" width="100%" touchEnabled="false" x="0" touchChildren="false" >\n'.format(depth * u"    ")
+    gropAttrs = getAttrs(group)
     for layer in group.layers:
         #龙骨的名字
-        name = layer.name.strip().split(" ")[0].replace("_tex","")
+        name = layer.name.strip().split(":")[0].split(" ")[0].replace("_tex","").strip()
+        # name = layer.name.strip().split(" ")[0].replace("_tex","")
         x,y,_,__ = getDimension(layer)
-        content += u'{}<n:BaseBoneComponent x="{}" y="{}" boneName="{}" />\n'.format(((depth + 1)* u"    "),x,y,name)
+        layerAttrs = getAttrs(layer)
+        attrs = mergeAttr(gropAttrs,layerAttrs)
+        content += u'{}<n:BaseBoneComponent x="{}" y="{}" boneName="{}" '.format(((depth + 1)* u"    "),x,y,name)
+
+        for k,v in attrs.iteritems():
+            if k == "clsName":
+                continue
+            content += u'{0}="{1}" '.format(k,v)
+        content += u'/>\n'
+
     content += u'{}</e:Group>\n'.format(depth * u"    ")
     return content
 
