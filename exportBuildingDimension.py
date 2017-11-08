@@ -141,15 +141,92 @@ def parseJson():
     global groundData
     for k in data:
         buildingData = data[k]
-        if buildingData.has_key("sx"):
-            del buildingData["sx"]
-            # buildingData["aox"] = groundData["x"] + groundData["w"] / 2 - buildingData["ox"]
-            # buildingData["ox"] = buildingData["ox"] + buildingData["aox"] - groundData["x"]
-            buildingData["ox"] = buildingData["ox"] - groundData["x"] + buildingData["w"] - 5
-            buildingData["oy"] = buildingData["oy"] - groundData["y"] - 5
+        if k == "shadow":
+            for m in buildingData:
+                bd = buildingData[m]
+                if not isinstance(bd,dict):
+                    continue
+                if bd.has_key("sx"):
+                    del bd["sx"]
+                    bd["ox"] = bd["ox"] - groundData["x"] + bd["w"] - 5
+                    bd["oy"] = bd["oy"] - groundData["y"] - 5
+                elif bd.has_key("ox"):
+                    bd["ox"] = bd["ox"] - groundData["x"]
+                    bd["oy"] = bd["oy"] - groundData["y"]
+        elif k == "shadow_img":
+            for m in buildingData:
+                bd = buildingData[m]
+                if bd.has_key("sx"):
+                    del bd["sx"]
+                    bd["ox"] = bd["ox"] - groundData["x"] + bd["w"] - 5
+                    bd["oy"] = bd["oy"] - groundData["y"] - 5
+                else:
+                    bd["ox"] = bd["ox"] - groundData["x"]
+                    bd["oy"] = bd["oy"] - groundData["y"]
         else:
-            buildingData["ox"] = buildingData["ox"] - groundData["x"]
-            buildingData["oy"] = buildingData["oy"] - groundData["y"]
+            if buildingData.has_key("sx"):
+                del buildingData["sx"]
+                buildingData["ox"] = buildingData["ox"] - groundData["x"] + buildingData["w"] - 5
+                buildingData["oy"] = buildingData["oy"] - groundData["y"] - 5
+            else:
+                buildingData["ox"] = buildingData["ox"] - groundData["x"]
+                buildingData["oy"] = buildingData["oy"] - groundData["y"]
+
+def parseShadowGroup(group):
+    assert isinstance(group,Group) and group.name.strip() == "shadow"
+    global data
+    global imgDir
+
+    shadow = OrderedDict()
+    shadow_img = OrderedDict()
+
+    pngDir = os.path.join(os.path.abspath(imgDir), "shadow")
+    if not os.path.exists(pngDir):
+        os.makedirs(pngDir)
+
+    for layer in group.layers:
+        layerName = layer.name.strip()
+        x,y,w,h = getDimension(layer)
+        pngName = ""
+        if layerName in [str(n) for n in [100,200,300,400,500,600,700,800]]:
+            src = "shadow_{}_png".format(layerName)
+            pngName = os.path.join(pngDir,"shadow_{}.png".format(layerName))
+            shadow[layerName] = OrderedDict()
+            shadow[layerName]["ox"] = x
+            shadow[layerName]["oy"] = y
+            shadow[layerName]["w"] = w
+            shadow[layerName]["h"] = h
+            shadow[layerName]["s"] = src
+        else:
+            names = layerName.split(":")
+            if len(names) == 2:
+                prefix = names[1]
+            else:
+                prefix = names[1]+"d"
+
+            if not shadow.has_key(prefix):
+                shadow[prefix] = []
+            min, max = names[0].split("-")
+            dataKey = "{}_{}_{}".format(min, max, prefix)
+            shadow[prefix].append({
+                "min": int(min),
+                "max": int(max),
+                "data": dataKey
+            })
+            src = "shadow_{}_png".format(dataKey)
+            pngName = os.path.join(pngDir, "shadow_{}.png".format(dataKey))
+            shadow_img[dataKey] = OrderedDict()
+            shadow_img[dataKey]["ox"] = x
+            shadow_img[dataKey]["oy"] = y
+            shadow_img[dataKey]["w"] = w
+            shadow_img[dataKey]["h"] = h
+            shadow_img[dataKey]["s"] = src
+
+        layer_image = layer.as_PIL()
+        layer_image.save(pngName)
+
+    data["shadow"] = shadow
+    data["shadow_img"] = shadow_img
 
 
 def parsePsd(group):
@@ -163,6 +240,9 @@ def parsePsd(group):
             lst = grpName.split(r":")
             if len(lst) > 1 and (lst[1] == "right" or lst[1] == "r"):
                 exportDimesion(layer,lst[0],True)
+            elif grpName == "shadow":
+                #阴影层，特殊处理
+                parseShadowGroup(layer)
             else:
                 exportImage(layer)
                 exportDimesion(layer,grpName)
