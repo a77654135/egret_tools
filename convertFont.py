@@ -6,7 +6,7 @@ import sys
 import traceback
 import json
 import shutil
-from psd_tools import PSDImage,Layer,Group
+import collections
 
 fontDir = ""
 refFile = ""
@@ -33,12 +33,12 @@ def parseFnt(path,fname):
     ref = {}
     if data.has_key(name):
         ref = data[name]
-    newContent = {}
+    newContent = collections.OrderedDict()
     with open(path,"r") as f:
         content = json.load(f)
         #print content
         newContent["file"] = content["file"]
-        newContent["frames"] = {}
+        newContent["frames"] = collections.OrderedDict()
         for k,v in content["frames"].iteritems():
             newK = k.replace("_png","")
             if ref.has_key(newK):
