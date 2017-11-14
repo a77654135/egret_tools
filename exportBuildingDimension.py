@@ -65,6 +65,8 @@ def exportImage(group):
     grpName = group.name.strip()
     if grpName in ["200","800","400_600"]:
         pngDir = os.path.join(os.path.abspath(imgDir), "bd_common")
+    elif grpName in ["100","300","500","700"]:
+        pngDir = os.path.join(os.path.abspath(imgDir), "bd_tech")
     else:
         pngDir = os.path.join(os.path.abspath(imgDir),"bd_" + currentPsdName)
         #pngDir = os.path.join(pngDir,grpName)
@@ -97,6 +99,11 @@ def exportImage(group):
         buildingName = r"{}_{}_{}_{}.png".format(currentPsdName,grpName,layerName,sd)
         if grpName in ["200", "800", "400_600"]:
             pngFile = os.path.join(pngDir, buildingName)
+        elif grpName in ["100","300","500","700"]:
+            pngFile = os.path.join(pngDir, grpName)
+            if not os.path.exists(pngFile):
+                os.makedirs(pngFile)
+            pngFile = os.path.join(pngFile, buildingName)
         else:
             if not os.path.exists(iDir):
                 os.makedirs(iDir)
