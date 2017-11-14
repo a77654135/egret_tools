@@ -108,9 +108,9 @@ def exportImage(group):
             if not os.path.exists(iDir):
                 os.makedirs(iDir)
             pngFile = os.path.join(iDir, buildingName)
+        print "export image:  " + buildingName
         layer_image = layer.as_PIL()
         layer_image.save(pngFile)
-        print "export image:  " + buildingName
 
 def exportDimesion(layer,grpName=None,isRight=False):
     global data
@@ -147,6 +147,8 @@ def exportDimesion(layer,grpName=None,isRight=False):
                 lvs = [imgName]
             else:
                 imgName = "_".join(layerNames)
+                # print layer.name
+                # print l.name
                 lvs = range(int(layerNames[0]),(int(layerNames[1]) + 1))
 
             x, y, w, h = getDimension(l)
@@ -253,6 +255,7 @@ def parseShadowGroup(group):
             shadow_img[dataKey]["h"] = h
             shadow_img[dataKey]["s"] = src
 
+        print "export image:  " + pngName
         layer_image = layer.as_PIL()
         layer_image.save(pngName)
 
@@ -300,6 +303,7 @@ def parseCreatGroup(group):
         common_img[dataKey]["s"] = src
 
 
+        print "export image:  " + pngName
         layer_image = layer.as_PIL()
         layer_image.save(pngName)
 
