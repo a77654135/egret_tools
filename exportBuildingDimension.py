@@ -62,8 +62,12 @@ def exportImage(group):
     assert isinstance(group,Group)
     global imgDir
     global currentPsdName
-    pngDir = os.path.join(os.path.abspath(imgDir),currentPsdName)
-    pngDir = os.path.join(pngDir,group.name.strip())
+    grpName = group.name.strip()
+    if grpName in ["200","800","400_600"]:
+        pngDir = os.path.join(os.path.abspath(imgDir), "bd_common")
+    else:
+        pngDir = os.path.join(os.path.abspath(imgDir),"bd_" + currentPsdName)
+        #pngDir = os.path.join(pngDir,grpName)
     if not os.path.exists(pngDir):
         os.makedirs(pngDir)
     for layer in group.layers:
@@ -74,9 +78,29 @@ def exportImage(group):
             sd = "d"
         layerName = layerName[0]
         layerName = layerName.split("-")
+        if len(layerName) == 1:
+            lv = int(layerName[0])
+            if(lv < 10):
+                iDir = lv
+            else:
+                iDir = int(lv / 10) * 10
+        else:
+            lv_min = int(layerName[0])
+            lv_max = int(layerName[1])
+            if lv_min < 10:
+                iDir = 10
+            else:
+                iDir = int(lv_min / 10) * 10
+        iDir = os.path.join(pngDir,"building_lv_{}".format(iDir))
+
         layerName = "_".join(layerName)
-        buildingName = r"{}_{}_{}_{}.png".format(currentPsdName,group.name.strip(),layerName,sd)
-        pngFile = os.path.join(pngDir,buildingName)
+        buildingName = r"{}_{}_{}_{}.png".format(currentPsdName,grpName,layerName,sd)
+        if grpName in ["200", "800", "400_600"]:
+            pngFile = os.path.join(pngDir, buildingName)
+        else:
+            if not os.path.exists(iDir):
+                os.makedirs(iDir)
+            pngFile = os.path.join(iDir, buildingName)
         layer_image = layer.as_PIL()
         layer_image.save(pngFile)
         print "export image:  " + buildingName
@@ -141,7 +165,7 @@ def parseJson():
     global groundData
     for k in data:
         buildingData = data[k]
-        if k == "shadow" or k == "commonBuilding":
+        if k == "shadow" or k == "common":
             for m in buildingData:
                 bd = buildingData[m]
                 if not isinstance(bd,dict):
@@ -153,7 +177,7 @@ def parseJson():
                 elif bd.has_key("ox"):
                     bd["ox"] = bd["ox"] - groundData["x"]
                     bd["oy"] = bd["oy"] - groundData["y"]
-        elif k == "shadow_img" or k == "commonBuilding_img":
+        elif k == "shadow_img" or k == "common_img":
             for m in buildingData:
                 bd = buildingData[m]
                 if bd.has_key("sx"):
@@ -180,7 +204,7 @@ def parseShadowGroup(group):
     shadow = OrderedDict()
     shadow_img = OrderedDict()
 
-    pngDir = os.path.join(os.path.abspath(imgDir), "shadow")
+    pngDir = os.path.join(os.path.abspath(imgDir), "bd_shadow")
     if not os.path.exists(pngDir):
         os.makedirs(pngDir)
 
@@ -233,10 +257,10 @@ def parseCreatGroup(group):
     global data
     global imgDir
 
-    commonBuilding = OrderedDict()
-    commonBuilding_img = OrderedDict()
+    common = OrderedDict()
+    common_img = OrderedDict()
 
-    pngDir = os.path.join(os.path.abspath(imgDir), "commonBuilding")
+    pngDir = os.path.join(os.path.abspath(imgDir), "bd_common")
     if not os.path.exists(pngDir):
         os.makedirs(pngDir)
 
@@ -250,30 +274,30 @@ def parseCreatGroup(group):
         else:
             prefix = names[1] + "d"
 
-        if not commonBuilding.has_key(prefix):
-            commonBuilding[prefix] = []
+        if not common.has_key(prefix):
+            common[prefix] = []
         min, max = names[0].split("-")
         dataKey = "{}_{}_{}".format(min, max, prefix)
-        commonBuilding[prefix].append({
+        common[prefix].append({
             "min": int(min),
             "max": int(max),
             "data": dataKey
         })
-        src = "commonBuilding_{}_png".format(dataKey)
-        pngName = os.path.join(pngDir, "commonBuilding_{}.png".format(dataKey))
-        commonBuilding_img[dataKey] = OrderedDict()
-        commonBuilding_img[dataKey]["ox"] = x
-        commonBuilding_img[dataKey]["oy"] = y
-        commonBuilding_img[dataKey]["w"] = w
-        commonBuilding_img[dataKey]["h"] = h
-        commonBuilding_img[dataKey]["s"] = src
+        src = "common_{}_png".format(dataKey)
+        pngName = os.path.join(pngDir, "common_{}.png".format(dataKey))
+        common_img[dataKey] = OrderedDict()
+        common_img[dataKey]["ox"] = x
+        common_img[dataKey]["oy"] = y
+        common_img[dataKey]["w"] = w
+        common_img[dataKey]["h"] = h
+        common_img[dataKey]["s"] = src
 
 
         layer_image = layer.as_PIL()
         layer_image.save(pngName)
 
-    data["commonBuilding"] = commonBuilding
-    data["commonBuilding_img"] = commonBuilding_img
+    data["common"] = common
+    data["common_img"] = common_img
 
 
 def parsePsd(group):
@@ -291,11 +315,11 @@ def parsePsd(group):
                 #阴影层，特殊处理
                 parseShadowGroup(layer)
             elif grpName == "creat":
-                #阴影层，特殊处理
+                #等级-1的建筑，通用的，特殊处理
                 parseCreatGroup(layer)
             else:
-                exportImage(layer)
                 exportDimesion(layer,grpName)
+                exportImage(layer)
 
 def parseFile(file,depth,fileName):
     ext = os.path.splitext(file)[-1]

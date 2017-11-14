@@ -26,37 +26,37 @@ def parseFile():
     global resFile
     global data
     with open(os.path.abspath(resFile),"r") as f:
-        data = json.load(f)
-
-        print data
-        print u"文件解析成功!"
+        data = json.load(f,encoding="utf-8")
 
 def work():
     global data
+
+    print data
     removeFiles = []
     for k,v in data.iteritems():
-        print k,v
-        if v:
-            k = os.path.abspath(k)
-            v = os.path.abspath(v)
-            if not os.path.exists(v):
-                os.makedirs(v)
-            if os.path.isdir(k):
-                copyDir(k,os.path.abspath(v))
-            else:
-                ff = os.path.abspath(k)
-                tf = os.path.join(v,os.path.split(k)[1])
-                print "{} -----> {}".format(ff,tf)
-                shutil.copy(ff,tf)
-        else:
+        k = os.path.abspath(k)
+        p = os.path.abspath(v[0])
+        rm = v[1]
+        if rm:
             removeFiles.append(k)
+        if not os.path.exists(p):
+            os.makedirs(p)
+        if os.path.isdir(k):
+            copyDir(k, os.path.abspath(p))
+        else:
+            ff = os.path.abspath(k)
+            tf = os.path.join(os.path.abspath(p), os.path.split(k)[1])
+            print "{} -----> {}".format(ff, tf)
+            # shutil.copy(ff,tf)
+            # os.rename(ff,tf)
+            shutil.copy(ff, tf)
 
-    for f in removeFiles:
-        fl = os.path.abspath(f)
-        if os.path.isdir(os.path.abspath(fl)):
+    for fl in removeFiles:
+        if os.path.isdir(fl):
             shutil.rmtree(fl)
         else:
-            os.unlink(fl)
+            #os.unlink(fl)
+            os.remove(fl)
         print "xxxx ----> {}".format(fl)
 
 def copyDir(path,to):
@@ -90,7 +90,7 @@ def main(argv):
             resFile = arg
 
     try:
-        resFile = r"F:\work\n5\roll\client\client\tools\source\fileCopy.json"
+        #resFile = r"F:\work\n5\roll\client\client\tools\source\fileCopy.json"
         parse()
     except:
         print traceback.print_exc()
