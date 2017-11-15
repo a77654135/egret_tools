@@ -1,4 +1,7 @@
-import os,json,getopt,sys,traceback
+import os,json,getopt,sys,traceback,time
+version = str(time.time()).split(".")[1]
+
+
 
 class Utils:
 
@@ -127,6 +130,9 @@ class Scanner:
         pngFiles = []
         otherFiles = []
         excludePng = []
+
+        global version
+
         for name in names:
             if name in Utils.ignoreFiles:
                 continue
@@ -160,7 +166,7 @@ class Scanner:
                 #print "json file load error:  {}".format(f[0])
                 name = Utils.getResName(f[2])
                 url = r"/".join(f[1]) + r"/" + f[2] if f[1] else f[2]
-                item = {"name": name, "type": "json", "url": url}
+                item = {"name": name, "type": "json", "url": url + "?v=" + version}
                 if name in self.oldValues:
                     for k in self.oldValues[name]:
                         item[k] = self.oldValues[name][k]
@@ -179,7 +185,7 @@ class Scanner:
                 for f in content["frames"]:
                     subkeys.append(f)
 
-                item = {"name":name,"type":"sheet","url":url,"subkeys":r",".join(subkeys)}
+                item = {"name":name,"type":"sheet","url":url + "?v=" + version,"subkeys":r",".join(subkeys)}
                 if name in self.oldValues:
                     for k in self.oldValues[name]:
                         item[k] = self.oldValues[name][k]
@@ -191,7 +197,7 @@ class Scanner:
                 name = Utils.getResName(f[2])
                 url = r"/".join(f[1]) + r"/" + f[2] if f[1] else f[2]
 
-                item = {"name": name, "type": "json", "url": url}
+                item = {"name": name, "type": "json", "url": url + "?v=" + version}
                 if name in self.oldValues:
                     for k in self.oldValues[name]:
                         item[k] = self.oldValues[name][k]
@@ -208,7 +214,7 @@ class Scanner:
             else:
                 name = Utils.getResName(fileName)
                 url = r"/".join(tempPath) + r"/" + fileName if f[1] else f[2]
-                item = {"name": name, "type": "image", "url": url}
+                item = {"name": name, "type": "image", "url": url + "?v=" + version}
                 if name in self.oldValues:
                     for k in self.oldValues[name]:
                         item[k] = self.oldValues[name][k]
@@ -234,7 +240,7 @@ class Scanner:
             name = Utils.getResName(fileName)
             #type = Utils.getFileType(fileName)
             url = r"/".join(tempPath) + r"/" + fileName if f[1] else f[2]
-            item = {"name": name, "type": Utils.resType[ext], "url": url}
+            item = {"name": name, "type": Utils.resType[ext], "url": url + "?v=" + version}
             if name in self.oldValues:
                 for k in self.oldValues[name]:
                     item[k] = self.oldValues[name][k]

@@ -31,25 +31,42 @@ def parseFile():
 def work():
     global data
 
-    print data
     removeFiles = []
-    for k,v in data.iteritems():
-        k = os.path.abspath(k)
-        p = os.path.abspath(v[0])
-        rm = v[1]
-        if rm:
-            removeFiles.append(k)
-        if not os.path.exists(p):
-            os.makedirs(p)
-        if os.path.isdir(k):
-            copyDir(k, os.path.abspath(p))
-        else:
-            ff = os.path.abspath(k)
-            tf = os.path.join(os.path.abspath(p), os.path.split(k)[1])
-            print "{} -----> {}".format(ff, tf)
-            # shutil.copy(ff,tf)
-            # os.rename(ff,tf)
-            shutil.copy(ff, tf)
+    for item in data:
+        for k,v in item.iteritems():
+            if not k:
+                continue
+            k = os.path.abspath(k)
+            if v == "":
+                removeFiles.append(k)
+                continue
+
+            p = os.path.abspath(v)
+            if not os.path.exists(p):
+                os.makedirs(p)
+
+            if os.path.isdir(k):
+                copyDir(k,p)
+            else:
+                tf = os.path.join(p, os.path.split(k)[1])
+                shutil.copy(k, tf)
+                print "{} -----> {}".format(k, tf)
+
+
+            # rm = v[1]
+            # if rm:
+            #     removeFiles.append(k)
+            # if not os.path.exists(p):
+            #     os.makedirs(p)
+            # if os.path.isdir(k):
+            #     copyDir(k, os.path.abspath(p))
+            # else:
+            #     ff = os.path.abspath(k)
+            #     tf = os.path.join(os.path.abspath(p), os.path.split(k)[1])
+            #     print "{} -----> {}".format(ff, tf)
+            #     # shutil.copy(ff,tf)
+            #     # os.rename(ff,tf)
+            #     shutil.copy(ff, tf)
 
     for fl in removeFiles:
         if os.path.isdir(fl):
@@ -90,7 +107,7 @@ def main(argv):
             resFile = arg
 
     try:
-        #resFile = r"F:\work\n5\roll\client\client\tools\source\fileCopy.json"
+        resFile = r"F:\work\n5\roll\client\client\tools\source\fileCopy.json"
         parse()
     except:
         print traceback.print_exc()
