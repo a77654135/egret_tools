@@ -107,7 +107,7 @@ def main(argv):
             resFile = arg
 
     try:
-        resFile = r"F:\work\n5\roll\client\client\tools\source\fileCopy.json"
+        #resFile = r"F:\work\n5\roll\client\client\tools\source\fileCopy.json"
         parse()
     except:
         print traceback.print_exc()
