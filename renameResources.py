@@ -60,6 +60,7 @@ def walk(d):
 
 def replInfo():
     global mapInfo
+    #替换名字
     for k,v in mapInfo.iteritems():
         if os.path.splitext(k)[1] in [".json",".fnt"]:
             file = os.path.join(v["path"],v["name"])
@@ -70,12 +71,13 @@ def replInfo():
                 if mapInfo.has_key(fname):
                     content["file"] = mapInfo[fname]["name"]
 
+            #字符串打乱
             jsonContent = json.dumps(content)
-            ret = []
+            ret = ""
             for s in jsonContent:
-                ret.append(ord(s) + 4)
+                ret += (chr(ord(s) - 4))
             with open(file,"w") as f:
-                json.dump(content,f)
+                f.write(ret)
 
     print "replace info success."
 
@@ -91,7 +93,7 @@ def rewriteFile():
             path,name_version = os.path.split(url)
             name,version = name_version.split("?")
             if mapInfo.has_key(name):
-                item["url"] = r"{}/{}?{}".format(path,mapInfo[name]["name"],version)
+                item["url"] = r"{}/{}".format(path,mapInfo[name]["name"])
                 if item["type"] == "json":
                     item["type"] = "o"
                 elif item["type"] == "sheet":
@@ -138,8 +140,8 @@ def main(argv):
             root= arg
 
     try:
-        # resFile = r"F:\work\n5\roll\client\client\resource\default.res.json"
-        # root = r"F:\work\n5\roll\client\client\resource"
+        resFile = r"F:\work\n5\roll\client\client\resource\default.res.json"
+        root = r"F:\work\n5\roll\client\client\resource"
         parse()
     except:
         print traceback.print_exc()
