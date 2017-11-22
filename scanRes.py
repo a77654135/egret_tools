@@ -1,6 +1,23 @@
-import os,json,getopt,sys,traceback,time
+#encoding:utf-8
+import os,json,getopt,sys,traceback,time,re
 version = str(time.time()).split(".")[1]
 
+
+zh_pattern = re.compile(u'[\u4e00-\u9fa5]+')
+kuohao_patten = re.compile(u'[()]')
+
+def contain_error(word):
+    '''
+    判断传入字符串是否包含中文
+    :param word: 待判断字符串
+    :return: True:包含中文  False:不包含中文
+    '''
+    #word = word.decode()
+    global zh_pattern
+    match = zh_pattern.search(word)
+    match2 = kuohao_patten.search(word)
+
+    return match or match2
 
 
 class Utils:
@@ -138,6 +155,8 @@ class Scanner:
                 continue
             if name != self.scanDirName and isRoot:
                 continue
+            if contain_error(name):
+                raise Exception("illegal resource name:" + name)
             f = os.path.join(absDir,name)
             if os.path.isdir(f):
                 tp = tempPath[:]

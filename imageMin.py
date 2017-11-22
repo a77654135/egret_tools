@@ -75,8 +75,8 @@ def main(argv):
             resFile= arg
 
     try:
-        resFile = r"F:\work\n5\roll\art\imageMinInfo.json"
-        path = r"F:\work\n5\roll\art\resources\texture"
+        # resFile = r"F:\work\n5\roll\art\imageMinInfo.json"
+        # path = r"F:\work\n5\roll\art\resources\texture"
         parse()
     except:
         print traceback.print_exc()
