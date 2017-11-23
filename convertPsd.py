@@ -51,7 +51,7 @@ def parsePsd(fileName,depthPath):
     global absSkinDir
     global force
     global currentPsdFile
-    #print "parsePsd:   " + fileName
+    print "parsePsd:   " + fileName
 
     name,ext = getNameAndExt(fileName)
 
@@ -61,9 +61,9 @@ def parsePsd(fileName,depthPath):
     exmlFile = os.path.join(exmlDir, u"{}Skin.exml".format(name))
 
     if os.path.exists(exmlFile) and not force:
-        #print "--------------------------------------------"
-        #print u"exml 文件已经存在，忽略：  {} ".format(u"{}Skin.exml".format(name))
-        #print "--------------------------------------------"
+        print "--------------------------------------------"
+        print u"exml 文件已经存在，忽略：  {} ".format(u"{}Skin.exml".format(name))
+        print "--------------------------------------------"
         return
 
     content = u""
@@ -121,6 +121,7 @@ def getImages(psd,depthPath):
                 f.write(data)
                 print u"生成图片：  " + imgFile
         except Exception,e:
+            raise e
             pass
     # #生成文字图片
     # if genFontImg:
@@ -232,6 +233,10 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
 
     newAttrs = mergeAttr(oldAttrs, otherAttr)
     newAttrs = mergeAttr(newAttrs,attrs)
+    if newAttrs.has_key("width") and type(newAttrs["width"]) == float:
+        newAttrs["width"] = int(newAttrs["width"])
+    if newAttrs.has_key("height") and type(newAttrs["height"]) == float:
+        newAttrs["height"] = int(newAttrs["height"])
 
     prefix = depth * u"    "
     content = u""
@@ -241,9 +246,9 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
             content += u"{0}<{1} ".format(prefix, "n:SimpleButton")
 
             if newAttrs.has_key("x"):
-                content += u'{0}="{1}" '.format("x", newAttrs["x"])
+                content += u'{0}="{1}" '.format("x", int(newAttrs["x"]))
             if newAttrs.has_key("y"):
-                content += u'{0}="{1}" '.format("y", newAttrs["y"])
+                content += u'{0}="{1}" '.format("y", int(newAttrs["y"]))
             if newAttrs.has_key("width"):
                 content += u'{0}="{1}" '.format("width", newAttrs["width"])
             if newAttrs.has_key("height"):
@@ -253,9 +258,9 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
             if newAttrs.has_key("name"):
                 content += u'{0}="{1}" '.format("name", newAttrs["name"])
             if newAttrs.has_key("anchorOffsetX"):
-                content += u'{0}="{1}" '.format("anchorOffsetX", newAttrs["anchorOffsetX"])
+                content += u'{0}="{1}" '.format("anchorOffsetX", int(newAttrs["anchorOffsetX"]))
             if newAttrs.has_key("anchorOffsetY"):
-                content += u'{0}="{1}" '.format("anchorOffsetY", newAttrs["anchorOffsetY"])
+                content += u'{0}="{1}" '.format("anchorOffsetY", int(newAttrs["anchorOffsetY"]))
             if newAttrs.has_key("bgSource"):
                 content += u'{0}="{1}" '.format("source", newAttrs["bgSource"])
             content += u'/>'
@@ -263,9 +268,9 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
             content += u"{0}<{1} ".format(prefix, clz)
 
             if newAttrs.has_key("x"):
-                content += u'{0}="{1}" '.format("x", newAttrs["x"])
+                content += u'{0}="{1}" '.format("x", int(newAttrs["x"]))
             if newAttrs.has_key("y"):
-                content += u'{0}="{1}" '.format("y", newAttrs["y"])
+                content += u'{0}="{1}" '.format("y", int(newAttrs["y"]))
             if newAttrs.has_key("width"):
                 content += u'{0}="{1}" '.format("width", newAttrs["width"])
             if newAttrs.has_key("height"):
@@ -330,9 +335,9 @@ def genContent(layer,clz,otherAttr,depth,isButton=False,depthPath=[]):
         content += u"{0}<{1} ".format(prefix, clz)
 
         if newAttrs.has_key("x"):
-            content += u'{0}="{1}" '.format("x", newAttrs["x"])
+            content += u'{0}="{1}" '.format("x", int(newAttrs["x"]))
         if newAttrs.has_key("y"):
-            content += u'{0}="{1}" '.format("y", newAttrs["y"])
+            content += u'{0}="{1}" '.format("y", int(newAttrs["y"]))
         if newAttrs.has_key("width"):
             content += u'{0}="{1}" '.format("width", newAttrs["width"])
         if newAttrs.has_key("height"):
@@ -503,8 +508,8 @@ def parseGroup(group,depth,depthPath,root=False):
     if hasattr(group,"name"):
         if group.name.strip().startswith(r"$"):
             return parseSpecialGroup(group,depth,depthPath)
-
-
+    # if not root:
+    #     print "parseGroup:  " + group.name
     content = u""
     prefix = depth * u"    "
     if root == False:
@@ -551,6 +556,7 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
     prefix = depth * u"    "
     isLabel = True if layer.text_data is not None else False
     name = layer.name.strip().split(":")[0].strip().split(" ")[0].strip()
+    #print "parseLayer:  " + name
     #name = layer.name.strip().split(" ")[0]
     x,y,width,height = getDimension(layer)
     visible = layer.visible
@@ -597,6 +603,11 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
 
     attrs = getAttrs(layer)
     newAttrs = mergeAttr(oldAttrs, attrs)
+    # print type(newAttrs["width"])
+    if newAttrs.has_key("width") and type(newAttrs["width"]) == float:
+        newAttrs["width"] = int(newAttrs["width"])
+    if newAttrs.has_key("height") and type(newAttrs["height"]) == float:
+        newAttrs["height"] = int(newAttrs["height"])
 
 
     if isLabel:
@@ -607,9 +618,9 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
         if newAttrs.has_key("y"):
             content += u'{0}="{1}" '.format("y", int(newAttrs["y"]))
         if newAttrs.has_key("width"):
-            content += u'{0}="{1}" '.format("width", int(newAttrs["width"]))
+            content += u'{0}="{1}" '.format("width", newAttrs["width"])
         if newAttrs.has_key("height"):
-            content += u'{0}="{1}" '.format("height", int(newAttrs["height"]))
+            content += u'{0}="{1}" '.format("height", newAttrs["height"])
         if newAttrs.has_key("id"):
             content += u'{0}="{1}" '.format("id", newAttrs["id"])
         if newAttrs.has_key("name"):
@@ -630,9 +641,9 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
         if newAttrs.has_key("y"):
             content += u'{0}="{1}" '.format("y", int(newAttrs["y"]))
         if newAttrs.has_key("width"):
-            content += u'{0}="{1}" '.format("width", int(newAttrs["width"]))
+            content += u'{0}="{1}" '.format("width", newAttrs["width"])
         if newAttrs.has_key("height"):
-            content += u'{0}="{1}" '.format("height", int(newAttrs["height"]))
+            content += u'{0}="{1}" '.format("height", newAttrs["height"])
         if newAttrs.has_key("id"):
             content += u'{0}="{1}" '.format("id", newAttrs["id"])
         if newAttrs.has_key("name"):
@@ -680,7 +691,8 @@ def parseDir(depthPath):
                     dpt = depthPath[:]
                     parsePsd(f,dpt)
         except Exception,e:
-            #print "parseDir error:  " + e.message
+            print "parseDir error:  " + e.message
+            print traceback.print_exc()
             continue
 
 def parse():
@@ -1045,7 +1057,8 @@ def main2():
     #print getLayerStroke(psd.layers[4])
     global absPsdDir
     global absSkinDir
-    dir = r"F:\work\n5\roll\art\testPsd"
+    #dir = r"F:\work\n5\roll\art\testPsd"
+    dir = r"F:\work\n5\roll\art\psd\city"
     absPsdDir = os.path.abspath(dir)
     absSkinDir = absPsdDir
     parseDir([])
