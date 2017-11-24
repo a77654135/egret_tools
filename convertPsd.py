@@ -560,7 +560,7 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
     #name = layer.name.strip().split(" ")[0]
     x,y,width,height = getDimension(layer)
     visible = layer.visible
-    alpha = 1 if layer.opacity != 255 else layer.opacity / 255
+    alpha = 1 if layer.opacity == 255 else layer.opacity / 255
 
     oldAttrs = {
         "x":x - offset[0],
