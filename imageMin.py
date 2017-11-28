@@ -42,7 +42,8 @@ def walk(d):
                     quality = names[name]
                 else:
                     quality = default
-                os.system(r"pngquant.exe --force --verbose --quality={0} {1} --output {1}".format(quality,newf))
+                os.system(r"pngquant.exe --force --quality={0} {1} --output {1}".format(quality,newf))
+                print "imageMin:  " + os.path.split(newf)[1]
 
 
 def parse():
@@ -71,7 +72,7 @@ def main(argv):
             sys.exit(2)
         elif opt in ("-p", "--path"):
             path = arg
-        elif opt in ("-r", "--root"):
+        elif opt in ("-f", "--resFile"):
             resFile= arg
 
     try:
