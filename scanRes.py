@@ -1,6 +1,5 @@
 #encoding:utf-8
-import os,json,getopt,sys,traceback,time,re
-version = str(time.time()).split(".")[1]
+import os,json,getopt,sys,traceback,time,re,hashlib
 
 
 zh_pattern = re.compile(u'[\u4e00-\u9fa5]+')
@@ -105,6 +104,7 @@ class Scanner:
         self.readDir(self.resDir,[],isRoot=True)
         self.filterContent()
         self.restore()
+        self.addVersion()
 
     def getInfo(self):
         cont = {}
@@ -148,8 +148,6 @@ class Scanner:
         otherFiles = []
         excludePng = []
 
-        global version
-
         for name in names:
             if name in Utils.ignoreFiles:
                 continue
@@ -185,7 +183,7 @@ class Scanner:
                 #print "json file load error:  {}".format(f[0])
                 name = Utils.getResName(f[2])
                 url = r"/".join(f[1]) + r"/" + f[2] if f[1] else f[2]
-                item = {"name": name, "type": "json", "url": url + "?v=" + version}
+                item = {"name": name, "type": "json", "url": url}
                 if name in self.oldValues:
                     for k in self.oldValues[name]:
                         item[k] = self.oldValues[name][k]
@@ -196,7 +194,7 @@ class Scanner:
                 continue
 
             if "file" in content and "frames" in content:
-                excludePng.append(content["file"])
+                #excludePng.append(content["file"])
                 name = Utils.getResName(f[2])
                 #type = Utils.getFileType(f[2])
                 url = r"/".join(f[1]) + r"/" + f[2] if f[1] else f[2]
@@ -204,7 +202,7 @@ class Scanner:
                 for f in content["frames"]:
                     subkeys.append(f)
 
-                item = {"name":name,"type":"sheet","url":url + "?v=" + version,"subkeys":r",".join(subkeys)}
+                item = {"name":name,"type":"sheet","url":url,"subkeys":r",".join(subkeys)}
                 if name in self.oldValues:
                     for k in self.oldValues[name]:
                         item[k] = self.oldValues[name][k]
@@ -216,7 +214,7 @@ class Scanner:
                 name = Utils.getResName(f[2])
                 url = r"/".join(f[1]) + r"/" + f[2] if f[1] else f[2]
 
-                item = {"name": name, "type": "json", "url": url + "?v=" + version}
+                item = {"name": name, "type": "json", "url": url}
                 if name in self.oldValues:
                     for k in self.oldValues[name]:
                         item[k] = self.oldValues[name][k]
@@ -233,7 +231,7 @@ class Scanner:
             else:
                 name = Utils.getResName(fileName)
                 url = r"/".join(tempPath) + r"/" + fileName if f[1] else f[2]
-                item = {"name": name, "type": "image", "url": url + "?v=" + version}
+                item = {"name": name, "type": "image", "url": url}
                 if name in self.oldValues:
                     for k in self.oldValues[name]:
                         item[k] = self.oldValues[name][k]
@@ -259,7 +257,7 @@ class Scanner:
             name = Utils.getResName(fileName)
             #type = Utils.getFileType(fileName)
             url = r"/".join(tempPath) + r"/" + fileName if f[1] else f[2]
-            item = {"name": name, "type": Utils.resType[ext], "url": url + "?v=" + version}
+            item = {"name": name, "type": Utils.resType[ext], "url": url }
             if name in self.oldValues:
                 for k in self.oldValues[name]:
                     item[k] = self.oldValues[name][k]
@@ -281,6 +279,33 @@ class Scanner:
         except Exception,e:
             print "dump json file error: " + e.message
             print traceback.print_exc()
+
+    def genVersion(self,url):
+        urls = url.split(r"/")
+        absPath = os.path.join(self.resDir, *urls)
+        with open(absPath,"rb") as f:
+            content = f.readlines()
+            md5 = hashlib.md5()
+            md5.update("".join(content))
+            version = md5.hexdigest()
+        return version[5:10]
+
+
+
+    def addVersion(self):
+        with open(os.path.join(self.resDir,self.outputFile),"r") as f:
+            content = json.load(f)
+        resources = content.get("resources",None)
+        if resources:
+            for item in resources:
+                url = item.get("url",None)
+                if url:
+                    version = self.genVersion(url)
+                    item["url"] = "{}?v={}".format(url,version)
+
+        with open(os.path.join(self.resDir,self.outputFile),"w") as f:
+            json.dump(content,f,indent=4)
+
 
 
 def main(argv):
