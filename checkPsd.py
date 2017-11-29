@@ -203,7 +203,7 @@ def main(argv):
             data = json.load(f)
 
         parse()
-        print psdInfo
+        #print psdInfo
     except:
         print traceback.print_exc()
 
