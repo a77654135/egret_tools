@@ -16,7 +16,7 @@ data = {}
 
 currentPsd = ""
 
-psdInfo = {}
+psdInfo = OrderedDict()
 result = []
 
 
@@ -51,7 +51,7 @@ def checkGroup(group):
     global currentPsd
 
     if not psdInfo.has_key(currentPsd):
-        psdInfo[currentPsd] = {}
+        psdInfo[currentPsd] = OrderedDict()
 
     id = getAttr(group,"id")
     if id:
@@ -71,7 +71,7 @@ def checkRoadAndGround(group,prefix):
     global currentPsd
 
     info = psdInfo[currentPsd]
-    info[prefix] = {}
+    info[prefix] = OrderedDict()
 
     for layer in group.layers:
         name = getAttr(layer,"name")
