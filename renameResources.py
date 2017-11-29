@@ -8,6 +8,7 @@ import json
 import hashlib
 import shutil
 import time
+import base64
 
 resFile = ""
 root = ""
@@ -32,11 +33,23 @@ def walk(d):
         else:
             #根据文件名生成md5
             path, fname = os.path.split(newf)
-            m = hashlib.md5()
-            m.update(fname)
-            m.update(str(time.time()))
-            newName = m.hexdigest()
+
+            with open(newf, "rb") as f:
+                content = f.readlines()
+                md5 = hashlib.md5()
+                md5.update(fname)
+                md5.update("".join(content))
+                newName = md5.hexdigest()
+
+            newName = newName[0:10]
+            # m = hashlib.md5()
+            # m.update(fname)
+            # m.update(str(time.time()))
+            # newName = m.hexdigest()
             newFile = os.path.join(path, newName)
+
+            print newf
+            print newFile
             os.rename(newf, newFile)
             #旧文件名：｛
             #    "name"："新文件名",
@@ -60,7 +73,7 @@ def encryptJson(jsonFile):
     with open(jsonFile, "w") as f:
         f.write(ret)
 
-    print "encrypt png: " + os.path.split(jsonFile)[1]
+    print "encrypt json: " + os.path.split(jsonFile)[1]
 
 def encryptPng(pngFile):
     with open(pngFile,"rb") as f:
@@ -100,8 +113,8 @@ def replInfo():
 
             #加密json
             encryptJson(file)
-        # elif ext == ".png":
-        #     encryptPng(file)
+        elif ext == ".png":
+            encryptPng(file)
 
     print "replace info success."
 
@@ -124,10 +137,9 @@ def rewriteFile():
                     item["type"] = "p"
                 elif item["type"] == "font":
                     item["type"] = "q"
-                elif item["type"] == "font":
-                    item["type"] = "q"
-                # elif item["type"] == "image" and item["name"].endswith("_png"):
-                #     item["type"] = "m"
+
+                elif item["type"] == "image" and item["name"].endswith("_png"):
+                    item["type"] = "m"
     with open(os.path.abspath(resFile),"w") as f:
         json.dump(content,f,indent=4)
     print "rewrite file success."
