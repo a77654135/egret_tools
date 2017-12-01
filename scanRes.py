@@ -194,7 +194,7 @@ class Scanner:
                 continue
 
             if "file" in content and "frames" in content:
-                #excludePng.append(content["file"])
+                excludePng.append(content["file"])
                 name = Utils.getResName(f[2])
                 #type = Utils.getFileType(f[2])
                 url = r"/".join(f[1]) + r"/" + f[2] if f[1] else f[2]
