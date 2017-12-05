@@ -13,6 +13,7 @@ psdDir = ""
 imgDir = ""
 jsonFile = ""
 currentPsdName = ""
+allData = OrderedDict()
 data = OrderedDict()
 groundData = OrderedDict()
 
@@ -59,65 +60,84 @@ def isLayerLocked(layer):
     return locked
 
 def exportImage(group):
+    #print "export image:  " + group.name
     assert isinstance(group,Group)
     global imgDir
     global currentPsdName
     grpName = group.name.strip()
-    if grpName in ["200","800","400_600"]:
-        pngDir = os.path.join(os.path.abspath(imgDir), "bd_common")
-    elif grpName in ["100","300","500","700"]:
+
+    if grpName in ["100","300","500","700"]:
         pngDir = os.path.join(os.path.abspath(imgDir), "bd_tech")
+        pngDir = os.path.join(pngDir, grpName)
+    elif grpName in ["200","400_600","800"]:
+        pngDir = os.path.join(os.path.abspath(imgDir), "bd_common")
     else:
         pngDir = os.path.join(os.path.abspath(imgDir),"bd_" + currentPsdName)
-        #pngDir = os.path.join(pngDir,grpName)
+        pngDir = os.path.join(pngDir,grpName)
+
     if not os.path.exists(pngDir):
         os.makedirs(pngDir)
+
     for layer in group.layers:
         layerName = layer.name.strip()
-        sd = "s"
-        layerName = layerName.split(":")
-        if len(layerName) > 1:
-            sd = "d"
-        layerName = layerName[0]
-        layerName = layerName.split("-")
-        if len(layerName) == 1:
-            lv = int(layerName[0])
-            if(lv < 10):
-                iDir = lv
-            else:
-                iDir = int(lv / 10) * 10
-        else:
-            lv_min = int(layerName[0])
-            lv_max = int(layerName[1])
-            if lv_min < 10:
-                iDir = 10
-            else:
-                iDir = int(lv_min / 10) * 10
-        iDir = os.path.join(pngDir,"building_lv_{}".format(iDir))
+        pngName = "{}_{}_{}.png".format(currentPsdName,grpName,layerName)
+        pngFile = os.path.join(pngDir,pngName)
 
-        layerName = "_".join(layerName)
-        buildingName = r"{}_{}_{}_{}.png".format(currentPsdName,grpName,layerName,sd)
-        if grpName in ["200", "800", "400_600"]:
-            pngFile = os.path.join(pngDir, buildingName)
-        elif grpName in ["100","300","500","700"]:
-            pngFile = os.path.join(pngDir, grpName)
-            if not os.path.exists(pngFile):
-                os.makedirs(pngFile)
-            pngFile = os.path.join(pngFile, buildingName)
-        else:
-            if not os.path.exists(iDir):
-                os.makedirs(iDir)
-            pngFile = os.path.join(iDir, buildingName)
-        print "export image:  " + buildingName
         layer_image = layer.as_PIL()
         layer_image.save(pngFile)
+        print "export image: " + pngName
+
+    # if grpName in ["200","800","400_600"]:
+    #     pngDir = os.path.join(os.path.abspath(imgDir), "bd_common")
+    # elif grpName in ["100","300","500","700"]:
+    #     pngDir = os.path.join(os.path.abspath(imgDir), "bd_tech")
+    # else:
+    #     pngDir = os.path.join(os.path.abspath(imgDir),"bd_" + currentPsdName)
+    #     #pngDir = os.path.join(pngDir,grpName)
+    # if not os.path.exists(pngDir):
+    #     os.makedirs(pngDir)
+    # for layer in group.layers:
+    #     layerName = layer.name.strip()
+    #
+    #     if len(layerName) == 1:
+    #         lv = int(layerName[0])
+    #         if(lv < 10):
+    #             iDir = lv
+    #         else:
+    #             iDir = int(lv / 10) * 10
+    #     else:
+    #         lv_min = int(layerName[0])
+    #         lv_max = int(layerName[1])
+    #         if lv_min < 10:
+    #             iDir = 10
+    #         else:
+    #             iDir = int(lv_min / 10) * 10
+    #     iDir = os.path.join(pngDir,"building_lv_{}".format(iDir))
+    #
+    #     layerName = "_".join(layerName)
+    #     buildingName = r"{}_{}_{}_{}.png".format(currentPsdName,grpName,layerName,sd)
+    #     if grpName in ["200", "800", "400_600"]:
+    #         pngFile = os.path.join(pngDir, buildingName)
+    #     elif grpName in ["100","300","500","700"]:
+    #         pngFile = os.path.join(pngDir, grpName)
+    #         if not os.path.exists(pngFile):
+    #             os.makedirs(pngFile)
+    #         pngFile = os.path.join(pngFile, buildingName)
+    #     else:
+    #         if not os.path.exists(iDir):
+    #             os.makedirs(iDir)
+    #         pngFile = os.path.join(iDir, buildingName)
+    #     print "export image:  " + buildingName
+    #     layer_image = layer.as_PIL()
+    #     layer_image.save(pngFile)
 
 def exportDimesion(layer,grpName=None,isRight=False):
     global data
     global groundData
     global currentPsdName
 
-    #print "exportDimesion:   " + grpName
+    # if grpName:
+    #     print "exportDimesion:   " + grpName
 
     if isinstance(layer,Layer):
         layerName = layer.name.strip()
@@ -132,40 +152,46 @@ def exportDimesion(layer,grpName=None,isRight=False):
             if isLayerLocked(l):
                 continue
             pos = "r" if isRight else "l"
-            ids = grpName.split("_")
-            sd = "s"
-            layerNames = l.name.strip().split(":")
-            if len(layerNames) > 1:
-                sd = "d"
-            else:
-                sd = "s"
-            layerNames = layerNames[0]
-
-            layerNames = layerNames.split("-")
-            if len(layerNames) == 1:
-                imgName = layerNames[0]
-                lvs = [imgName]
-            else:
-                imgName = "_".join(layerNames)
-                # print layer.name
-                # print l.name
-                lvs = range(int(layerNames[0]),(int(layerNames[1]) + 1))
 
             x, y, w, h = getDimension(l)
-            src = "{}_{}_{}_{}_png".format(currentPsdName, grpName, imgName,sd)
-            for lv in lvs:
-                for id in ids:
-                    # print ids
-                    name = "{}_{}_{}_{}".format(currentPsdName, id, lv, pos)
-                    data[name] = OrderedDict()
-                    data[name]["ox"] = x
-                    data[name]["oy"] = y
-                    data[name]["w"] = w
-                    data[name]["h"] = h
-                    data[name]["s"] = src
-                    #print src
-                    if isRight:
-                        data[name]["sx"] = -1
+            src = "{}_{}_{}_png".format(currentPsdName, grpName, l.name.strip())
+            name = "{}_{}_{}_{}".format(currentPsdName, grpName, l.name.strip(),pos)
+
+            data[name] = OrderedDict()
+            data[name]["ox"] = x
+            data[name]["oy"] = y
+            data[name]["w"] = w
+            data[name]["h"] = h
+            data[name]["s"] = src
+            # print src
+            if isRight:
+                data[name]["sx"] = -1
+
+
+            # if len(layerNames) == 1:
+            #     imgName = layerNames[0]
+            #     lvs = [imgName]
+            # else:
+            #     imgName = "_".join(layerNames)
+            #     # print layer.name
+            #     # print l.name
+            #     lvs = range(int(layerNames[0]),(int(layerNames[1]) + 1))
+            #
+            # x, y, w, h = getDimension(l)
+            # src = "{}_{}_{}_{}_png".format(currentPsdName, grpName, imgName,sd)
+            # for lv in lvs:
+            #     for id in ids:
+            #         # print ids
+            #         name = "{}_{}_{}_{}".format(currentPsdName, id, lv, pos)
+            #         data[name] = OrderedDict()
+            #         data[name]["ox"] = x
+            #         data[name]["oy"] = y
+            #         data[name]["w"] = w
+            #         data[name]["h"] = h
+            #         data[name]["s"] = src
+            #         #print src
+            #         if isRight:
+            #             data[name]["sx"] = -1
 
 
 
@@ -312,6 +338,9 @@ def parseCreatGroup(group):
 
 
 def parsePsd(group):
+    global data
+    global allData
+    data = OrderedDict()
     for layer in group.layers:
         if isLayerLocked(layer):
             continue
@@ -332,6 +361,11 @@ def parsePsd(group):
                 exportDimesion(layer,grpName)
                 exportImage(layer)
 
+    parseJson()
+    allData.update(data)
+
+
+
 def parseFile(file,depth,fileName):
     ext = os.path.splitext(file)[-1]
     if ext != ".psd":
@@ -346,6 +380,8 @@ def parseFile(file,depth,fileName):
     psd = PSDImage.load(file)
     parsePsd(psd)
 
+
+
 def walkDir(dir,depth):
     for f in os.listdir(dir):
         path = os.path.join(dir,f)
@@ -359,14 +395,13 @@ def walkDir(dir,depth):
 def parse():
     global psdDir
     global jsonFile
-    global data
+    global allData
     walkDir(os.path.abspath(psdDir),[])
-    parseJson()
-    if jsonFile:
-        with open(os.path.abspath(jsonFile),"w") as f:
-            json.dump(data,f)
-            print "export json ok."
 
+    if jsonFile:
+        with open(os.path.abspath(jsonFile), "w") as f:
+            json.dump(allData, f, indent=4)
+            print "export json ok."
 
 def main(argv):
     global psdDir
@@ -376,13 +411,13 @@ def main(argv):
         opts, args = getopt.getopt(argv, "p:i:j:", ["psdDir=", "imgDir=", "jsonFile="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'convertPsd -p <psdDir> -i <imgDir> -j <jsonFile>'
+        print 'exportBuildingDimension -p <psdDir> -i <imgDir> -j <jsonFile>'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'convertPsd -p <psdDir> -i <imgDir> -j <jsonFile>'
+            print 'exportBuildingDimension -p <psdDir> -i <imgDir> -j <jsonFile>'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-p", "--psdDir"):
@@ -393,6 +428,7 @@ def main(argv):
             jsonFile = arg
 
     try:
+        #psdDir = r"F:\work\n5\roll\art\building"
         parse()
     except:
         print traceback.print_exc()
