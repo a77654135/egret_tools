@@ -378,6 +378,9 @@ def parseSkinGroup(group,depth,depthPath,root=False):
 #解析其他命名group，扩展group的功能，允许自定义
 def parseCommonGroup(group,depth,depthPath,root=False):
     attrs = getAttrs(group)
+    alpha = 1 if group.opacity == 255 else group.opacity / 255.0
+    if alpha != 1:
+        attrs["alpha"] = alpha
     if attrs is None:
         return
     cls = attrs["clsName"]
@@ -427,6 +430,9 @@ def parseButtonGroup(group,depth,depthPath,root=False):
         "touchChildren":'false',
         "touchEnabled":'true'
     }
+    alpha = 1 if group.opacity == 255 else group.opacity / 255.0
+    if alpha != 1:
+        otherAttr["alpha"] = alpha
     layers = group.layers
     length = len(layers)
     attrs = getAttrs(group)
@@ -464,6 +470,9 @@ def parseBoneGroup(group,depth,depthPath,root=False):
     content = u""
     content += u'{}<e:Group y="0" height="100%" width="100%" touchEnabled="false" x="0" touchChildren="false" >\n'.format(depth * u"    ")
     gropAttrs = getAttrs(group)
+    alpha = 1 if group.opacity == 255 else group.opacity / 255.0
+    if alpha != 1:
+        gropAttrs["alpha"] = alpha
     for layer in group.layers:
         #龙骨的名字
         name = layer.name.strip().split(":")[0].split(" ")[0].replace("_tex","").strip()
@@ -519,6 +528,9 @@ def parseGroup(group,depth,depthPath,root=False):
             "touchEnabled":"false",
             "touchChildren":"true"
         }
+        alpha = 1 if group.opacity == 255 else group.opacity / 255.0
+        if alpha != 1:
+            oldAttrs["alpha"] = alpha
         attrs = getAttrs(group)
         newAttrs = mergeAttr(oldAttrs, attrs)
         content += u'{}<e:Group '.format(prefix)
@@ -560,7 +572,6 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
     #name = layer.name.strip().split(" ")[0]
     x,y,width,height = getDimension(layer)
     visible = layer.visible
-    alpha = 1 if layer.opacity == 255 else layer.opacity / 255.0
 
     oldAttrs = {
         "x":x - offset[0],
@@ -571,6 +582,7 @@ def parseLayer(layer,depth,depthPath,offset=[0,0]):
     }
     if not visible:
         oldAttrs["visible"] = "false"
+    alpha = 1 if layer.opacity == 255 else layer.opacity / 255.0
     if alpha != 1:
         oldAttrs["alpha"] = alpha
     if isLabel:
