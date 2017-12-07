@@ -19,6 +19,14 @@ currentPsd = ""
 psdInfo = OrderedDict()
 result = []
 
+def isLayerLocked(layer):
+    assert isinstance(layer,Layer) or isinstance(layer,Group)
+    locked = False
+    try:
+        locked = layer._info[9][0]
+    except:
+        pass
+    return locked
 
 def getLayerName(layer):
     assert isinstance(layer,Layer) or isinstance(layer,Group)
@@ -74,6 +82,8 @@ def checkRoadAndGround(group,prefix):
     info[prefix] = OrderedDict()
 
     for layer in group.layers:
+        if isLayerLocked(layer):
+            continue
         name = getAttr(layer,"name")
         if name is None:
             continue
@@ -91,6 +101,8 @@ def checkPsd(psdFile):
     print "parse psd: " + os.path.split(psdFile)[1]
     psd = PSDImage.load(psdFile)
     for layer in psd.layers:
+        if isLayerLocked(layer):
+            continue
         if isinstance(layer,Group):
             checkGroup(layer)
 
