@@ -46,7 +46,7 @@ def getAttr(layer,attrName):
             for attrInfo in attrs:
                 infos = attrInfo.split("=")
                 if infos[0] == attrName:
-                    return infos[1]
+                    return infos[1].strip()
             return None
         else:
             return None
@@ -63,10 +63,12 @@ def checkGroup(group):
 
     id = getAttr(group,"id")
     if id:
-        if psdInfo.has_key(id):
+        #print "id:                        {}".format(id)
+        if psdInfo[currentPsd].has_key(id):
             psdInfo[currentPsd][id] += 1
         else:
             psdInfo[currentPsd][id] = 1
+        #print "id  count:                        {}".format(psdInfo[currentPsd][id])
 
         if id == "roadGrp":
             checkRoadAndGround(group,"road")
@@ -87,10 +89,12 @@ def checkRoadAndGround(group,prefix):
         name = getAttr(layer,"name")
         if name is None:
             continue
+        #print "group name:  " + name
         if info[prefix].has_key(name):
             info[prefix][name] += 1
         else:
             info[prefix][name] = 1
+        #print "group name  count:                        {}".format(info[prefix][name])
 
 
 
