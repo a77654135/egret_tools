@@ -17,6 +17,8 @@ allData = OrderedDict()
 data = OrderedDict()
 groundData = OrderedDict()
 
+imgData = OrderedDict()
+
 
 '''
 layer_image = layer.as_PIL()
@@ -64,6 +66,7 @@ def exportImage(group):
     assert isinstance(group,Group)
     global imgDir
     global currentPsdName
+    global imgData
     grpName = group.name.strip()
 
     if grpName in ["100","300","500","700"]:
@@ -85,6 +88,9 @@ def exportImage(group):
 
         layer_image = layer.as_PIL()
         layer_image.save(pngFile)
+        if not imgData.has_key(currentPsdName):
+            imgData[currentPsdName] = OrderedDict()
+        imgData[currentPsdName]["{}_{}".format(grpName,layerName)] = pngFile
         print "export image: " + pngName
 
     # if grpName in ["200","800","400_600"]:
@@ -350,7 +356,7 @@ def parsePsd(group):
             grpName = layer.name.strip()
             lst = grpName.split(r":")
             if len(lst) > 1 and (lst[1] == "right" or lst[1] == "r"):
-                exportDimesion(layer,lst[0],True)
+                exportDimesion(layer,lst[0].strip(),True)
             elif grpName == "shadow":
                 #阴影层，特殊处理
                 parseShadowGroup(layer)
@@ -396,12 +402,16 @@ def parse():
     global psdDir
     global jsonFile
     global allData
+    global imgDir
+    global imgData
     walkDir(os.path.abspath(psdDir),[])
 
     if jsonFile:
         with open(os.path.abspath(jsonFile), "w") as f:
             json.dump(allData, f, indent=4)
             print "export json ok."
+    with open(os.path.join(os.path.abspath(imgDir),"imgInfo.json"),"w") as f:
+        json.dump(imgData,f,indent=4)
 
 def main(argv):
     global psdDir

@@ -12,6 +12,8 @@ psdDir = ""
 imgDir = ""
 data = {}
 
+curPsd = ""
+
 
 '''
 layer_image = layer.as_PIL()
@@ -65,6 +67,11 @@ def parseLayer(layer,dir):
                 imgName = os.path.join(dir, "{}.png".format(name))
                 layer_image.save(imgName)
                 print "export png successfully.  " + (imgName)
+                # if isinstance(name,unicode):
+                #     print "imgname:"+name
+                #     global curPsd
+                #     print curPsd
+                #     print ""
         else:
             d = {}
             d["w"] = w
@@ -73,7 +80,13 @@ def parseLayer(layer,dir):
             layer_image = layer.as_PIL()
             imgName = os.path.join(dir, "{}.png".format(name))
             layer_image.save(imgName)
+
             print "export png successfully.  " + (imgName)
+            # if isinstance(name, unicode):
+            #     print "imgname:" + name
+            #     global curPsd
+            #     print curPsd
+            #     print ""
     except Exception,e:
         pass
 
@@ -106,6 +119,9 @@ def parseFile(file,depth,fileName):
         os.makedirs(psdImgDir)
     psd = PSDImage.load(file)
     parseGroup(psd,psdImgDir)
+
+    global curPsd
+    curPsd = file
 
 def walkDir(dir,depth):
     global data
