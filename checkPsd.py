@@ -129,7 +129,7 @@ def analysis():
 
     result = []
 
-    grps = ["gameGrp","roadGrp","groundGrp"]
+    grps = ["gameGrp","roadGrp","groundGrp","grassGrp"]
 
     for psdName,info in psdInfo.iteritems():
         result.append(psdName)
