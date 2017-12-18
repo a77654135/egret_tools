@@ -69,7 +69,7 @@ def exportImage(group):
     global imgData
     grpName = group.name.strip()
 
-    if grpName in ["100","300","500","700"]:
+    if grpName in ["100","300","500","700","9999"]:
         pngDir = os.path.join(os.path.abspath(imgDir), "bd_tech")
         pngDir = os.path.join(pngDir, grpName)
     elif grpName in ["200","400_600","800"]:
