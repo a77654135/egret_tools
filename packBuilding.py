@@ -17,7 +17,7 @@ buildingPositionData_json = r"F:\work\n5\roll\document\表单\json\buildingPosit
 
 
 baseImgDir = r"F:\work\n5\roll\art\resources\game\building"
-dstImgDir = r"F:\work\n5\roll\client\client\resource\assets\game\building"
+dstImgDir = r"F:\work\n5\roll\art\resources\game\building"
 skinNames = ["normal","ktv","space","sugar","huoguo"]
 techIds = [100,200,300,400,500,600,700,800,9999]
 techNames = ["home","police","bank","bus","draw","steal","card_1","card_2","god"]
