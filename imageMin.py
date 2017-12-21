@@ -25,21 +25,22 @@ def parseFile():
 
 def walk(d):
     global data
-    default = data.get("default",30)
-    names = data.get("name",{})
-    skip = data.get("skip",[])
+    default = data.get("default",100)
+    imgs = data.get("imgs",{})
+    skipImg = data.get("skipImg",[])
+    skipDir = data.get("skipDir",[])
     absDir = os.path.abspath(d)
     for f in os.listdir(absDir):
         newf = os.path.join(absDir,f)
-        if os.path.isdir(newf):
+        if os.path.isdir(newf) and f not in skipDir:
             walk(newf)
         else:
             name,ext = os.path.splitext(f)
             if ext == ".png":
-                if name in skip:
+                if name in skipImg:
                     continue
-                if name in names:
-                    quality = names[name]
+                if name in imgs:
+                    quality = imgs[name]
                 else:
                     quality = default
                 os.system(r"pngquant.exe --force --quality={0} {1} --output {1}".format(quality,newf))
