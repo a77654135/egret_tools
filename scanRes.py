@@ -37,7 +37,8 @@ class Utils:
 	
     ignoreFiles = [
 		"default.thm.json",
-		"default.res.json"
+		"default.res.json",
+		#"pack",
 	]
 
     @staticmethod
@@ -151,8 +152,9 @@ class Scanner:
         for name in names:
             if name in Utils.ignoreFiles:
                 continue
-            if name != self.scanDirName and isRoot:
-                continue
+            if(self.scanDirName):
+                if name != self.scanDirName and isRoot:
+                    continue
             if contain_error(name):
                 raise Exception("illegal resource name:" + name)
             f = os.path.join(absDir,name)
