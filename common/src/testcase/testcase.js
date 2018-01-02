@@ -1,4 +1,6 @@
 var testcase;
+var egret;
+var __STAGE;
 (function (testcase) {
 
     var list = [];
@@ -20,6 +22,25 @@ var testcase;
         }
     }
 
+    function showUpdateTime() {
+        var p = document.createElement("p");
+        p.style.position = "absolute";
+        p.left = "0px";
+        p.top = "40px";
+        p.height = "30px";
+        p.style.textAlign = "center";
+        p.innerText = "update time: " + 0;
+        div.appendChild(p);
+
+        // var lastUpdateTime = 0;
+        setTimeout(() => {
+            __STAGE.addEventListener(egret.Event.ENTER_FRAME, () => {
+                p.innerText = "update time: " + egret.lastUpdateTime;
+            }, testcase);
+        }, 2000);
+    }
+    showUpdateTime();
+
     function register(name, func, ctx) {
 
         var length = list.length;
@@ -33,7 +54,7 @@ var testcase;
         var group = document.createElement("div");
         group.style.position = "absolute";
         group.style.left = "0px";
-        group.style.top = (length * 160 + 40) + "px";
+        group.style.top = (length * 160 + 70) + "px";
         group.style.width = "100%";
         group.style.height = "150px";
         group.style.background = "gray";
