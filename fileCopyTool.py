@@ -48,7 +48,13 @@ def work():
             if os.path.isdir(k):
                 copyDir(k,p)
             else:
-                tf = os.path.join(p, os.path.split(k)[1])
+                try:
+                    if p.index(".") >= 0:
+                        tf = p
+                    else:
+                        tf = os.path.join(p, os.path.split(k)[1])
+                except:
+                    tf = os.path.join(p, os.path.split(k)[1])
                 shutil.copy(k, tf)
                 print "{} -----> {}".format(k, tf)
 
