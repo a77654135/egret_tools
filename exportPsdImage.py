@@ -93,6 +93,8 @@ def parseLayer(layer,dir):
 
 def parseGroup(group,dir):
     for layer in group.layers:
+        if isLayerLocked(layer):
+            continue
         if isinstance(layer,Layer):
             parseLayer(layer,dir)
         elif isinstance(layer,Group):
