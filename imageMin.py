@@ -27,9 +27,16 @@ def walk(d):
     global data
     default = data.get("default",100)
     imgs = data.get("imgs",{})
+    dirs = data.get("dirs",{})
     skipImg = data.get("skipImg",[])
     skipDir = data.get("skipDir",[])
     absDir = os.path.abspath(d)
+
+    dirname = os.path.split(absDir)[1]
+    qua = default
+    if dirs.has_key(dirname):
+        qua = dirs[dirname]
+
     for f in os.listdir(absDir):
         newf = os.path.join(absDir,f)
         if os.path.isdir(newf) and f not in skipDir:
@@ -42,7 +49,7 @@ def walk(d):
                 if name in imgs:
                     quality = imgs[name]
                 else:
-                    quality = default
+                    quality = qua
                 os.system(r"pngquant.exe --force --quality={0} {1} --output {1}".format(quality,newf))
                 print "imageMin:  " + os.path.split(newf)[1]
 
