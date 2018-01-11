@@ -6,8 +6,9 @@ import sys
 import traceback
 import json
 import shutil
-from collections import OrderedDict
-from psd_tools import PSDImage,Layer,Group
+import time
+import re
+
 
 resFile = ""
 data = {}
@@ -42,7 +43,7 @@ def work():
                 continue
 
             p = os.path.abspath(v)
-            if not os.path.exists(p):
+            if not os.path.exists(p) and not re.search(r"\.",p):
                 os.makedirs(p)
 
             if os.path.isdir(k):
@@ -92,6 +93,7 @@ def copyDir(path,to):
 def parse():
     parseFile()
     work()
+    time.sleep(2)
 
 
 def main(argv):
