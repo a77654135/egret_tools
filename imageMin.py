@@ -50,6 +50,7 @@ def walk(d):
                     quality = imgs[name]
                 else:
                     quality = qua
+                newf.replace(r".","_副本.")
                 os.system(r"pngquant.exe --force --quality={0} {1} --output {1}".format(quality,newf))
                 print "imageMin:  " + os.path.split(newf)[1]
 

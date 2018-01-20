@@ -385,6 +385,7 @@ def parseFile(file,depth,fileName):
 
     psd = PSDImage.load(file)
     parsePsd(psd)
+    
 
 
 
@@ -441,7 +442,10 @@ def main(argv):
         #psdDir = r"F:\work\n5\roll\art\building"
         parse()
     except:
+        global currentPsdName
         print traceback.print_exc()
+        print ""
+        print "currentPsdName: " + currentPsdName
 
 
 if __name__ == '__main__':
