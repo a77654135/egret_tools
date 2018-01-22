@@ -53,16 +53,16 @@ def copyImg(depth):
         os.makedirs(td)
 
     for f in os.listdir(fd):
-        path = os.path.join(fd,f)
+        path = os.path.join(fd,f.decode("utf-8"))
         if os.path.isdir(path):
             dp = depth[:]
             dp.append(f)
             copyImg(dp)
         elif os.path.isfile(path):
             if os.path.splitext(path)[1] == ".png":
-                parsePng(path,depth[:],f)
+                parsePng(path,depth[:],f.decode("utf-8"))
             else:
-                shutil.copyfile(path, os.path.join(td, f))
+                shutil.copyfile(path, os.path.join(td, f.decode("utf-8")))
                 print u"拷贝文件：  " + f
 
 
@@ -76,22 +76,22 @@ def parsePng(path,depth,imgName):
     skipImg = data.get("skipImg", [])
     skipDir = data.get("skipDir", [])
 
-    ff = path
+    ff = path.decode("utf-8")
     tf = os.path.join(toDir, *depth)
-    tf = os.path.join(tf, imgName)
+    tf = os.path.join(tf, imgName.decode("utf-8"))
+    tf = tf.decode("utf-8")
 
     st_size_t = 0
     st_size_f = os.stat(ff).st_size
     if os.path.exists(tf):
         st_size_t = os.stat(tf).st_size
 
-    imgData[tf] = st_size_t
-    imgData[ff] = st_size_f
     if os.path.exists(tf) and imgData.get(ff) == st_size_f and imgData.get(tf) == st_size_t:
         pass
     else:
         if imgName in skipImg:
             shutil.copyfile(ff,tf)
+            imgData[tf] = os.stat(tf).st_size
             print u"拷贝文件：" + imgName
         else:
             cp = False
@@ -102,6 +102,7 @@ def parsePng(path,depth,imgName):
             if cp:
                 shutil.copyfile(ff, tf)
                 print u"拷贝文件：" + imgName
+                imgData[tf] = os.stat(tf).st_size
             else:
                 quality = default
                 for d in depth:
@@ -120,7 +121,7 @@ def parsePng(path,depth,imgName):
                         imgData[tf] = os.stat(tf).st_size
                 except:
                     pass
-
+    imgData[ff] = st_size_f
 
 
 
@@ -136,8 +137,8 @@ def delImg(depth):
     delList = []
 
     for f in os.listdir(td):
-        fp = os.path.join(fd,f)
-        tp = os.path.join(td,f)
+        fp = os.path.join(fd,f.decode("utf-8")).decode("utf-8")
+        tp = os.path.join(td,f.decode("utf-8")).decode("utf-8")
         if not os.path.exists(fp):
             if os.path.isdir(tp):
                 shutil.rmtree(tp)
@@ -193,16 +194,16 @@ def main(argv):
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-f", "--fromDir"):
-            fromDir = os.path.abspath(arg)
+            fromDir = os.path.abspath(arg.decode("utf-8"))
         elif opt in ("-t", "--toDir"):
-            toDir= os.path.abspath(arg)
+            toDir= os.path.abspath(arg.decode("utf-8"))
         elif opt in ("-c", "--config"):
-            resFile= os.path.abspath(arg)
+            resFile= os.path.abspath(arg.decode("utf-8"))
 
     try:
-        fromDir = r"F:\work\n5\roll\art\resources"
-        toDir = r"F:\work\n5\roll\art\resources_1"
-        resFile = r"F:\work\n5\roll\art\tools\src\imageMinInfo.json"
+        # fromDir = r"F:\work\n5\roll\art\resources"
+        # toDir = r"F:\work\n5\roll\art\resources_1"
+        # resFile = r"F:\work\n5\roll\art\tools\src\imageMinInfo.json"
         parse()
     except:
         print traceback.print_exc()
