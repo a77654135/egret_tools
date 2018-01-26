@@ -88,8 +88,8 @@ def main(argv):
         elif opt in ("-r", "--refFile"):
             refFile = arg
 
-    fontDir = r"F:\work\n5\roll\client\client\resource\assets\font"
-    refFile = r"F:\work\n5\roll\client\client\tools\source\fontRef.json"
+    # fontDir = r"F:\work\n5\roll\client\client\resource\assets\font"
+    # refFile = r"F:\work\n5\roll\client\client\tools\source\fontRef.json"
 
     try:
         parseReferenceFile()
