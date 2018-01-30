@@ -25,6 +25,7 @@ import time
 
 projectDir = ""
 releaseDir = ""
+updateConfig = False
 configData = {}
 
 
@@ -81,15 +82,6 @@ def updateReleaseCode():
     else:
         print u"没有找到 skin.min.js"
 
-    try:
-        if os.path.exists(releaseDir):
-            shutil.rmtree(releaseDir)
-    except:
-        try:
-            if os.path.exists(releaseDir):
-                os.unlink(releaseDir)
-        except:
-            pass
 
 
 def runPublish():
@@ -114,7 +106,27 @@ def runPublish():
     然后拷贝文件到发布目录
     '''
 
-    shutil.copytree(tempDir,releaseDir)
+    if not os.path.exists(releaseDir):
+        os.makedirs(releaseDir)
+
+    #清空目录
+    for f in os.listdir(releaseDir):
+        fn = os.path.join(releaseDir,f)
+        if re.search(r"\.svn",f):
+            continue
+        if os.path.isdir(fn):
+            shutil.rmtree(fn)
+        else:
+            os.unlink(fn)
+
+    for f in os.listdir(tempDir):
+        fn = os.path.join(tempDir,f)
+        if os.path.isdir(fn):
+            shutil.copytree(fn,os.path.join(releaseDir,f))
+        else:
+            shutil.copyfile(fn,os.path.join(releaseDir,f))
+
+    # shutil.copytree(tempDir,releaseDir)
     print u"拷贝到发布目录成功"
 
 
@@ -211,7 +223,28 @@ def restoreFile():
 
     print u"恢复原来的配置成功"
 
+
+def updateSVN():
+    u'''
+    更新项目中的代码
+    :return:
+    '''
+    global updateConfig
+    global projectDir
+
+    os.chdir(projectDir)
+    os.system(r"svn update {}".format(projectDir))
+    print u"更新代码成功"
+
+    if not updateConfig:
+        return
+    os.system(r"gulp json-zip")
+    print u"更新配置成功"
+
+
+
 def parse():
+    updateSVN()
     updateReleaseCode()
     runPublish()
     parseThemeJson()
@@ -222,25 +255,30 @@ def parse():
 def main(argv):
     global projectDir
     global releaseDir
+    global updateConfig
 
     try:
-        opts, args = getopt.getopt(argv, "p:r:", ["projectDir=", "releaseDir=",])
+        opts, args = getopt.getopt(argv, "p:r:u", ["projectDir=", "releaseDir=","updateConfig",])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'publish -p <projectDir> -r <releaseDir> '
+        print 'publish -p <projectDir> -r <releaseDir>  --updateConfig'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'publish -p <projectDir> -r <releaseDir> '
+            print 'publish -p <projectDir> -r <releaseDir>  --updateConfig'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-p", "--projectDir"):
             projectDir = os.path.abspath(arg)
         elif opt in ("-r", "--releaseDir"):
             releaseDir = os.path.abspath(arg)
+        elif opt in ("-u", "--updateConfig"):
+            updateConfig = True
 
+    # projectDir = r"F:\work\n5\roll\client\client"
+    # releaseDir = r"F:\work\n5\roll\roll2"
 
     try:
         parse()
