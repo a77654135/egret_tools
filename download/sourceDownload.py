@@ -22,14 +22,14 @@ import traceback
 import shutil
 import time
 import requests
+import redis
 
 
 infoFile = ""
 resourceDir = ""
 domain = ""
 
-download_list = []
-
+redisCli = None
 
 class DownloadTools():
     '''
@@ -83,6 +83,12 @@ class DownloadTools():
             DownloadTools.downloadExml(realUrl,absFileName)
         elif ext == "dbbin":
             DownloadTools.downloadDbbin(realUrl,absFileName)
+        elif ext == "webp":
+            DownloadTools.downloadBin(realUrl,absFileName)
+        elif ext == "plist":
+            DownloadTools.downloadPlain(realUrl,absFileName)
+        elif ext == "ccbi":
+            DownloadTools.downloadPlain(realUrl,absFileName)
         else:
             print "ext:  {}".format(ext.strip())
             print "fileName:  {}".format(fileName.strip())
@@ -91,6 +97,7 @@ class DownloadTools():
     @staticmethod
     def downloadBin(url,filename):
         if os.path.exists(filename):
+            print "exist:  {}".format(filename)
             return
         try:
             print "download bin: {}".format(url)
@@ -105,6 +112,7 @@ class DownloadTools():
     @staticmethod
     def downloadPlain(url,filename):
         if os.path.exists(filename):
+            print "exist:  {}".format(filename)
             return
         try:
             print "download plain: {}".format(url)
@@ -165,7 +173,7 @@ class DownloadTools():
     @staticmethod
     def parseDefaultResJson(urlStr, filename, domainName):
         print "parseDefaultResJson:  {}".format(filename)
-        global download_list
+        global redisCli
         urlStr = urlStr.replace(r"default.res.json","")
         if os.path.exists(filename):
             with open(filename,"r") as f:
@@ -180,15 +188,12 @@ class DownloadTools():
                     url = url.split(r"?")[0]
 
                     newUrl = urlStr + url
-                    download_list.append(newUrl)
-
-            downNext()
+                    redisCli.lpush("download",newUrl)
 
 
     @staticmethod
     def parseDefaultThmJson(urlStr, filename, domainName):
         print "parseDefaultThmJson:  {}".format(filename)
-        global download_list
         urlStr = urlStr.replace(r"default.thm.json", "")
         if urlStr.endswith(r"resource/"):
             idx = urlStr.index(r"resource/")
@@ -203,9 +208,8 @@ class DownloadTools():
                 for item in exmls:
                     url = item.split(r"?")[0]
                     newUrl = urlStr + url
-                    download_list.append(newUrl)
+                    redisCli.lpush("download", newUrl)
 
-            downNext()
 
     @staticmethod
     def downloadFnt(url, filename):
@@ -215,26 +219,16 @@ class DownloadTools():
     def downloadDbbin(url, filename):
         DownloadTools.downloadBin(url, filename)
 
-isDownload = False
+
 def downNext():
-    global isDownload
-    if isDownload:
-        return
+    global redisCli
 
-    global download_list
-    url = download_list.pop()
+    while redisCli.llen("download"):
+        url = redisCli.rpop("download")
 
-    # if re.search(r"\.jpg",url) or re.search(r"\.png",url):
-    #     print url
+        DownloadTools.downloadFile(url)
+        time.sleep(0.5)
 
-    isDownload = True
-
-    DownloadTools.downloadFile(url)
-    time.sleep(0.5)
-
-    isDownload = False
-
-    downNext()
 
 
 def parseLine(line):
@@ -245,14 +239,14 @@ def parseLine(line):
     '''
     # print "parseLine:  " + line
     global domain
-    global download_list
+    global redisCli
     if re.search(r"HTTP/1\.1",line):
         urlStr = line.replace(r"GET ","")
         urlStr = urlStr.replace(r" HTTP/1.1","")
         urlStr = urlStr.split(r"?")[0]
         urlStr = urlStr.replace("\n","")
-        if re.search(r"//{}/".format(domain),urlStr):
-            download_list.append(urlStr)
+        if domain and re.search(r"//{}/".format(domain),urlStr):
+            redisCli.lpush("download", urlStr)
 
 
 def parse():
@@ -263,13 +257,16 @@ def parse():
     global infoFile
     print "parse file:  {}".format(infoFile)
 
-    with open(infoFile,"r") as f:
-        while True:
-            line = f.readline()
-            if line:
-                parseLine(line)
-            else:
-                break
+    if os.path.exists(infoFile):
+        with open(infoFile,"r") as f:
+            while True:
+                line = f.readline()
+                if line:
+                    parseLine(line)
+                else:
+                    break
+
+        os.unlink(infoFile)
 
 
 def main(argv):
@@ -302,7 +299,9 @@ def main(argv):
     # infoFile= os.path.abspath(r"G:\source\84_Headers.txt")
     # domain = r"cdn.11h5.com"
 
+    global redisCli
     try:
+        redisCli = redis.Redis("127.0.0.1",6379,12)
         parse()
         downNext()
     except Exception,e:
