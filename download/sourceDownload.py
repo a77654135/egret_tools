@@ -53,11 +53,15 @@ class DownloadTools():
 
         fileDir = os.path.join(os.path.abspath(resourceDir),*urlPath[:-1])
         fileName = urlPath[-1].strip()
+        fileName = fileName.split("?")[0]
+        fileName = fileName.split("%")[0]
         absFileName = os.path.join(fileDir,fileName)
         if not os.path.exists(fileDir):
             os.makedirs(fileDir)
 
         ext = fileName.split(".")[-1].strip()
+        ext = ext.split(r"?")[0]
+        ext = ext.split(r"%")[0]
 
         if ext == "jpg":
             DownloadTools.downloadJpg(realUrl,absFileName)
@@ -65,7 +69,7 @@ class DownloadTools():
             DownloadTools.downloadPng(realUrl,absFileName)
         elif ext == "gif":
             DownloadTools.downloadGif(realUrl,absFileName)
-        elif ext == "mp3":
+        elif ext in ["mp3","ogg", "wav"]:
             DownloadTools.downloadMp3(realUrl,absFileName)
         elif ext == "js":
             DownloadTools.downloadJs(realUrl,absFileName)
@@ -89,6 +93,8 @@ class DownloadTools():
             DownloadTools.downloadPlain(realUrl,absFileName)
         elif ext == "ccbi":
             DownloadTools.downloadPlain(realUrl,absFileName)
+        elif ext == "zip":
+            DownloadTools.downloadBin(realUrl,absFileName)
         else:
             print "ext:  {}".format(ext.strip())
             print "fileName:  {}".format(fileName.strip())
@@ -186,6 +192,7 @@ class DownloadTools():
                     if not url:
                         continue
                     url = url.split(r"?")[0]
+                    url = url.split(r"%")[0]
 
                     newUrl = urlStr + url
                     redisCli.lpush("download",newUrl)
@@ -207,6 +214,7 @@ class DownloadTools():
                     return
                 for item in exmls:
                     url = item.split(r"?")[0]
+                    url = item.split(r"%")[0]
                     newUrl = urlStr + url
                     redisCli.lpush("download", newUrl)
 
@@ -244,6 +252,7 @@ def parseLine(line):
         urlStr = line.replace(r"GET ","")
         urlStr = urlStr.replace(r" HTTP/1.1","")
         urlStr = urlStr.split(r"?")[0]
+        urlStr = urlStr.split(r"%")[0]
         urlStr = urlStr.replace("\n","")
         if domain and re.search(r"//{}/".format(domain),urlStr):
             redisCli.lpush("download", urlStr)
