@@ -108,12 +108,18 @@ class DownloadTools():
         try:
             print "download bin: {}".format(url)
             res = requests.get(url, headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1'}, verify=False)
-            with open(filename, "wb") as f:
-                f.write(res.content)
-            print "download file: {}".format(filename)
+            if res.status_code == 200:
+                with open(filename, "wb") as f:
+                    f.write(res.content)
+                print "download file: {}".format(filename)
+            else:
+                print "download failed:  {}".format(filename)
+                redisCli.lpush("fail_link", url)
+            time.sleep(0.5)
         except Exception,e:
             print e.message
             print "download failed:  {}".format(filename)
+            redisCli.lpush("fail_link", url)
 
     @staticmethod
     def downloadPlain(url,filename):
@@ -123,12 +129,18 @@ class DownloadTools():
         try:
             print "download plain: {}".format(url)
             res = requests.get(url, headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1'}, verify=False)
-            with open(filename, "w") as f:
-                f.write(res.content)
-            print "download file: {}".format(filename)
+            if res.status_code == 200:
+                with open(filename, "w") as f:
+                    f.write(res.content)
+                print "download file: {}".format(filename)
+            else:
+                print "download failed:  {}".format(filename)
+                redisCli.lpush("fail_link", url)
+            time.sleep(0.5)
         except Exception,e:
             print e.message
             print "download failed:  {}".format(filename)
+            redisCli.lpush("fail_link", url)
 
     @staticmethod
     def downloadJpg(url,filename):
@@ -195,7 +207,9 @@ class DownloadTools():
                     url = url.split(r"%")[0]
 
                     newUrl = urlStr + url
-                    redisCli.lpush("download",newUrl)
+                    if not redisCli.sismember("duplicate",newUrl):
+                        redisCli.lpush("download",newUrl)
+                        redisCli.sadd("duplicate",newUrl)
 
 
     @staticmethod
@@ -210,13 +224,32 @@ class DownloadTools():
             with open(filename, "r") as f:
                 content = json.load(f)
                 exmls = content.get("exmls", [])
-                if not len(exmls):
-                    return
-                for item in exmls:
-                    url = item.split(r"?")[0]
-                    url = item.split(r"%")[0]
-                    newUrl = urlStr + url
-                    redisCli.lpush("download", newUrl)
+                skins = content.get("skins", {})
+                if len(skins):
+                    if isinstance(skins,dict):
+                        for k,item in skins.iteritems():
+                            url = item.split(r"?")[0]
+                            url = item.split(r"%")[0]
+                            newUrl = urlStr + url
+                            redisCli.lpush("download", newUrl)
+                if len(exmls):
+                    for item in exmls:
+                        if isinstance(item,str):
+                            url = item.split(r"?")[0]
+                            url = item.split(r"%")[0]
+                            newUrl = urlStr + url
+                            if not redisCli.sismember("duplicate", newUrl):
+                                redisCli.lpush("download", newUrl)
+                                redisCli.sadd("duplicate", newUrl)
+                        elif isinstance(item,dict):
+                            path = item.get("path","")
+                            if path:
+                                url = path.split(r"?")[0]
+                                url = item.split(r"%")[0]
+                                newUrl = urlStr + url
+                                if not redisCli.sismember("duplicate", newUrl):
+                                    redisCli.lpush("download", newUrl)
+                                    redisCli.sadd("duplicate", newUrl)
 
 
     @staticmethod
@@ -233,9 +266,11 @@ def downNext():
 
     while redisCli.llen("download"):
         url = redisCli.rpop("download")
+        try:
+            DownloadTools.downloadFile(url)
+        except Exception,e:
+            print e.message
 
-        DownloadTools.downloadFile(url)
-        time.sleep(0.5)
 
 
 
