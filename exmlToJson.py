@@ -26,6 +26,8 @@ class ExmlHandler( xml.sax.ContentHandler):
         #当前解析的借点的父节点
         self.parentNode = None
 
+        self.depth = []
+
 
     # 元素开始事件处理
     def startElement(self, tag, attributes):
@@ -42,6 +44,7 @@ class ExmlHandler( xml.sax.ContentHandler):
             if attr.has_key("height"):
                 self.curNode["height"] = int(attr["height"])
             self.curNode["children"] = []
+            self.depth.append(self.curNode)
         else:
             self.parentNode = self.curNode
             self.curNode = collections.OrderedDict()
@@ -51,6 +54,8 @@ class ExmlHandler( xml.sax.ContentHandler):
             self.curNode["class"] = tagList[-1]
             if tagList[-1] == "Group":
                 self.curNode["children"] = []
+                self.depth.append(self.curNode)
+            # self.curNode["children"] = []
 
             for k in attr:
                 if k == "touchEnabled":
@@ -82,10 +87,6 @@ class ExmlHandler( xml.sax.ContentHandler):
                     self.curNode["y"] = int(attr[k])
                 elif k == "alpha":
                     self.curNode["alpha"] = float(attr[k])
-                elif k == "id":
-                    self.curNode["id"] = attr[k]
-                elif k == "name":
-                    self.curNode["name"] = attr[k]
                 else:
                     self.curNode[k] = attr[k]
 
@@ -95,7 +96,17 @@ class ExmlHandler( xml.sax.ContentHandler):
     # 元素结束事件处理
     def endElement(self, tag):
         # print "endElement..........." + tag
-        self.curNode = self.parentNode
+        if(tag.strip() == "e:Group"):
+            if len(self.depth):
+                self.depth.pop()
+            else:
+                print "1111111111"
+            if len(self.depth):
+                self.curNode = self.depth[-1]
+            else:
+                print "2222222222"
+        else:
+            self.curNode = self.parentNode
 
 
     def endDocument(self):
