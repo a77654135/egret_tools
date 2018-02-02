@@ -89,11 +89,11 @@ class DownloadTools():
             DownloadTools.downloadDbbin(realUrl,absFileName)
         elif ext == "webp":
             DownloadTools.downloadBin(realUrl,absFileName)
-        elif ext == "plist":
+        elif ext in ["plist","map","txt"]:
             DownloadTools.downloadPlain(realUrl,absFileName)
         elif ext == "ccbi":
             DownloadTools.downloadPlain(realUrl,absFileName)
-        elif ext == "zip":
+        elif ext in ["zip","zz"]:
             DownloadTools.downloadBin(realUrl,absFileName)
         else:
             print "ext:  {}".format(ext.strip())
@@ -289,7 +289,10 @@ def parseLine(line):
         urlStr = urlStr.split(r"?")[0]
         urlStr = urlStr.split(r"%")[0]
         urlStr = urlStr.replace("\n","")
-        if domain and re.search(r"//{}/".format(domain),urlStr):
+        if domain:
+            if re.search(r"//{}/".format(domain),urlStr):
+                redisCli.lpush("download", urlStr)
+        else:
             redisCli.lpush("download", urlStr)
 
 
