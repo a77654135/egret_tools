@@ -93,7 +93,7 @@ class DownloadTools():
             DownloadTools.downloadPlain(realUrl,absFileName)
         elif ext == "ccbi":
             DownloadTools.downloadPlain(realUrl,absFileName)
-        elif ext in ["zip","zz"]:
+        elif ext in ["zip","zz","jar","ani"]:
             DownloadTools.downloadBin(realUrl,absFileName)
         else:
             print "ext:  {}".format(ext.strip())
@@ -316,6 +316,95 @@ def parse():
         os.unlink(infoFile)
 
 
+def parseDefaultThmJson(depth,filename):
+    global resourceDir
+    dp = depth[:-1]
+    url = "/".join(dp)
+    url = "http://{}/".format(url)
+
+    fdir = os.path.join(resourceDir, *depth)
+    fname = os.path.join(fdir, filename)
+
+    with open(fname, "r") as f:
+        content = json.load(f)
+
+        exmls = content.get("exmls", [])
+        if len(exmls) == 0:
+            return
+        for item in exmls:
+            path = None
+            if isinstance(item,str):
+                path = item
+            elif isinstance(item,dict):
+                path = item.get("path", "")
+            if not path:
+                continue
+            ul = path.split("?")[0]
+            newUrl = r"{}{}".format(url, ul)
+            if not redisCli.sismember("duplicate", newUrl):
+                redisCli.lpush("download", newUrl)
+                redisCli.sadd("duplicate", newUrl)
+
+        exmls = content.get("preexmls", [])
+        if len(exmls) == 0:
+            return
+        for item in exmls:
+            path = None
+            if isinstance(item, str):
+                path = item
+            elif isinstance(item, dict):
+                path = item.get("path", "")
+            if not path:
+                continue
+            ul = path.split("?")[0]
+            newUrl = r"{}{}".format(url, ul)
+            if not redisCli.sismember("duplicate", newUrl):
+                redisCli.lpush("download", newUrl)
+                redisCli.sadd("duplicate", newUrl)
+
+
+def parseDefaultResJson(depth,filename):
+    global resourceDir
+    url = "/".join(depth)
+    url = "http://{}/".format(url)
+
+    fdir = os.path.join(resourceDir,*depth)
+    fname = os.path.join(fdir,filename)
+
+    with open(fname,"r") as f:
+        content = json.load(f)
+
+        resources = content.get("resources",[])
+        if len(resources) == 0:
+            return
+        for item in resources:
+            ul = item.get("url","")
+            if not ul:
+                continue
+            ul = ul.split("?")[0]
+            newUrl = r"{}{}".format(url,ul)
+            if not redisCli.sismember("duplicate", newUrl):
+                redisCli.lpush("download", newUrl)
+                redisCli.sadd("duplicate", newUrl)
+
+
+
+
+def walkDir(depth):
+    global resourceDir
+    dir = os.path.join(resourceDir,*depth)
+    for f in os.listdir(dir):
+        path = os.path.join(dir,f)
+        if os.path.isdir(path):
+            dp = depth[:]
+            dp.append(f)
+            walkDir(dp)
+        else:
+            if f in ["default.thm.json","default2.thm.json","default3.thm.json","default4.thm.json",]:
+                parseDefaultThmJson(depth,f)
+            elif f in ["default.res.json","resource.json"]:
+                parseDefaultResJson(depth,f)
+
 def main(argv):
     global resourceDir
     global domain
@@ -342,22 +431,76 @@ def main(argv):
             domain = arg
 
 
-    # resourceDir = os.path.abspath(r"G:\source")
-    # infoFile= os.path.abspath(r"G:\source\84_Headers.txt")
+    resourceDir = os.path.abspath(r"G:\source")
+    # infoFile= os.path.abspath(r"G:\source\99_Headers.txt")
     # domain = r"cdn.11h5.com"
 
     global redisCli
     try:
         redisCli = redis.Redis("127.0.0.1",6379,12)
         parse()
+        # walkDir([])
         downNext()
     except Exception,e:
         print traceback.print_exc()
 
 
+c = 0
+def ttt():
+    global c
+    global redisCli
+    res = r"G:\source\swild-cdn.egret.com\wild\0103\180103115111\resource\res.json"
+    with open(res,"r") as f:
+        content = json.load(f)
+
+    redisCli = redis.Redis("127.0.0.1", 6379, 12)
+
+
+    for k in content:
+        if k == "groups":
+            continue
+        if k == "alias":
+            item = content[k]
+            for u in item:
+                url = item[u]
+                url = url.split("?")[0]
+                url = url.split("#")[0]
+                newUrl = r"http://swild-cdn.egret.com/wild/0103/180103115111/resource/{}".format(url)
+                if not redisCli.sismember("duplicate", newUrl):
+                    redisCli.lpush("download", newUrl)
+                    redisCli.sadd("duplicate", newUrl)
+                    c += 1
+        elif k == "resources":
+            resources = content[k]
+            ttt1(resources)
+
+def ttt1(obj):
+    global c
+    global redisCli
+    for k in obj:
+        if k == "url":
+            url = obj[k]
+            url = url.split("?")[0]
+            url = url.split("#")[0]
+            newUrl = r"http://swild-cdn.egret.com/wild/0103/180103115111/resource/{}".format(obj[k])
+            if not redisCli.sismember("duplicate", newUrl):
+                redisCli.lpush("download", newUrl)
+                redisCli.sadd("duplicate", newUrl)
+                c += 1
+        else:
+            v = obj[k]
+            if isinstance(v,dict):
+                ttt1(v)
+
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    # main(sys.argv[1:])
+
+    resourceDir = os.path.abspath(r"G:\source")
+    ttt()
+    print c
+    downNext()
+
 
     # resourceDir = os.path.abspath(r"G:\source")
     #
