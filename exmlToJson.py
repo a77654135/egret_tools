@@ -76,11 +76,12 @@ class ExmlHandler( xml.sax.ContentHandler):
                         self.curNode["height"] = int(prop)
                 elif k == "source":
                     prop = attr[k]
-                    propList = prop.split(r".")
-                    if len(propList) > 1:
-                        self.curNode["source"] = propList[-1]
-                    else:
-                        self.curNode["source"] = prop
+                    # propList = prop.split(r".")
+                    # if len(propList) > 1:
+                    #     self.curNode["source"] = propList[-1]
+                    # else:
+                    #     self.curNode["source"] = prop
+                    self.curNode["source"] = prop
                 elif k == "x":
                     self.curNode["x"] = int(attr[k])
                 elif k == "y":
@@ -117,7 +118,7 @@ class ExmlHandler( xml.sax.ContentHandler):
         fname = os.path.join(path,filename.replace(r".exml",r".json"))
 
         with open(fname,"w") as f:
-            json.dump(self.data,f,indent=4)
+            json.dump(self.data,f)
 
 
 
