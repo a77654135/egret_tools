@@ -89,11 +89,9 @@ class DownloadTools():
             DownloadTools.downloadDbbin(realUrl,absFileName)
         elif ext == "webp":
             DownloadTools.downloadBin(realUrl,absFileName)
-        elif ext in ["plist","map","txt"]:
+        elif ext in ["plist","map","txt","tiles","ccbi"]:
             DownloadTools.downloadPlain(realUrl,absFileName)
-        elif ext == "ccbi":
-            DownloadTools.downloadPlain(realUrl,absFileName)
-        elif ext in ["zip","zz","jar","ani"]:
+        elif ext in ["zip","zz","jar","ani","pvr"]:
             DownloadTools.downloadBin(realUrl,absFileName)
         else:
             print "ext:  {}".format(ext.strip())
