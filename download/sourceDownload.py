@@ -28,6 +28,8 @@ import redis
 infoFile = ""
 resourceDir = ""
 domain = ""
+fromDir = ""
+notThm = False
 
 redisCli = None
 
@@ -315,6 +317,9 @@ def parse():
 
 
 def parseDefaultThmJson(depth,filename):
+    global notThm
+    if notThm:
+        return
     global resourceDir
     dp = depth[:-1]
     url = "/".join(dp)
@@ -362,6 +367,13 @@ def parseDefaultThmJson(depth,filename):
 
 
 def parseDefaultResJson(depth,filename):
+    global fromDir
+    if fromDir:
+        if fromDir not in depth:
+            return
+    print r"parseDefaultResJson:  "
+    print depth
+    print ""
     global resourceDir
     url = "/".join(depth)
     url = "http://{}/".format(url)
@@ -407,18 +419,19 @@ def main(argv):
     global resourceDir
     global domain
     global infoFile
+    global fromDir
 
     try:
-        opts, args = getopt.getopt(argv, "r:d:i:", ["resourceDir=", "domain=","infoFile=",])
+        opts, args = getopt.getopt(argv, "r:d:i:f:", ["resourceDir=", "domain=","infoFile=","fromDir="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'publish -r <resourceDir> -d <domain> -i <infoFile>'
+        print 'publish -r <resourceDir> -d <domain> -i <infoFile> -f <fromDir>'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'publish -r <resourceDir> -d <domain> -i <infoFile>'
+            print 'publish -r <resourceDir> -d <domain> -i <infoFile> -f <fromDir>'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-r", "--resourceDir"):
@@ -427,11 +440,14 @@ def main(argv):
             infoFile = os.path.abspath(arg)
         elif opt in ("-d", "--domain"):
             domain = arg
+        elif opt in ("-f", "--fromDir"):
+            fromDir = arg
 
 
     resourceDir = os.path.abspath(r"G:\source")
     # infoFile= os.path.abspath(r"G:\source\99_Headers.txt")
     # domain = r"cdn.11h5.com"
+    # fromDir = r"cdnxjqxzh5.tisgame.com"
 
     global redisCli
     try:
@@ -447,7 +463,7 @@ c = 0
 def ttt():
     global c
     global redisCli
-    res = r"G:\source\swild-cdn.egret.com\wild\0103\180103115111\resource\res.json"
+    res = r"G:\source\fa.jygame.net\wcby\awy\Game\10\resource\default.res.json"
     with open(res,"r") as f:
         content = json.load(f)
 
@@ -463,7 +479,7 @@ def ttt():
                 url = item[u]
                 url = url.split("?")[0]
                 url = url.split("#")[0]
-                newUrl = r"http://swild-cdn.egret.com/wild/0103/180103115111/resource/{}".format(url)
+                newUrl = r"http://fa.jygame.net/wcby/awy/Game/10/resource/{}".format(url)
                 if not redisCli.sismember("duplicate", newUrl):
                     redisCli.lpush("download", newUrl)
                     redisCli.sadd("duplicate", newUrl)
@@ -480,7 +496,7 @@ def ttt1(obj):
             url = obj[k]
             url = url.split("?")[0]
             url = url.split("#")[0]
-            newUrl = r"http://swild-cdn.egret.com/wild/0103/180103115111/resource/{}".format(obj[k])
+            newUrl = r"http://fa.jygame.net/wcby/awy/Game/10/resource/{}".format(obj[k])
             if not redisCli.sismember("duplicate", newUrl):
                 redisCli.lpush("download", newUrl)
                 redisCli.sadd("duplicate", newUrl)
@@ -492,12 +508,12 @@ def ttt1(obj):
 
 
 if __name__ == "__main__":
-    # main(sys.argv[1:])
+    main(sys.argv[1:])
 
-    resourceDir = os.path.abspath(r"G:\source")
-    ttt()
-    print c
-    downNext()
+    # resourceDir = os.path.abspath(r"G:\source")
+    # ttt()
+    # print c
+    # downNext()
 
 
     # resourceDir = os.path.abspath(r"G:\source")
