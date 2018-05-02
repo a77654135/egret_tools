@@ -10,6 +10,7 @@ import re
 import json
 import datetime
 from PIL import Image
+import traceback
 
 # img = Image.open("img.png",mode="r")
 # r,g,b,a = img.split()
@@ -30,6 +31,7 @@ from PIL import Image
 
 
 imgDir = ""
+newDir = ""
 span = 50
 spanCount = 2
 count = 0
@@ -97,9 +99,63 @@ def parse():
         if ext == "png":
             parsePng(n)
 
+def clamp(v,minv,maxv):
+    return max(min(maxv,v),minv)
+
+def parsePng1(pngFile,newPngFile):
+    # print "parse png:  " + pngFile
+    img = Image.open(pngFile, mode="r")
+    newImg = Image.new("RGBA", (img.width, img.height), (0, 0, 0, 0))
+
+    for x in range(0, img.width):
+        for y in range(0, img.height):
+            pixel = img.getpixel((x, y))
+            if not pixel:
+                continue
+            if not pixel[3]:
+                continue
+            # vColor = (pixel[0] / 255.0,pixel[1] / 255.0,pixel[2] / 255.0,pixel[3] / 255.0)
+            # texColor = (vColor[0] / vColor[3], vColor[1] / vColor[3], vColor[2] / vColor[3], vColor[3])
+            # locColor = (clamp(texColor[0] * 5 + 5 / 255,0,1),clamp(texColor[1] * 5 + 5 / 255,0,1),clamp(texColor[2] * 1 + 1 / 255,0,1),clamp(texColor[3] * 1 + 1 / 255,0,1))
+            # locColor = (locColor[0] * locColor[3],locColor[1] * locColor[3],locColor[2] * locColor[3],locColor[3])
+            # fColor = (locColor[0] * vColor[0],locColor[1] * vColor[1],locColor[2] * vColor[2],locColor[3])
+            # fColor = (int(fColor[0] * 255),int(fColor[1] * 255),int(fColor[2] * 255),int(fColor[3] * 255))
+            # r = min(5 / 255 + newPixel[0], 1)
+            # g = min(5 / 255 + newPixel[1], 1)
+            # b = newPixel[2]
+            # a = newPixel[3]
+            # newPixel = (r * 255, g * 255, b * 255, a * 255)
+            # print pixel
+            r = clamp(pixel[0] * 5,0,255)
+            g = clamp(pixel[1] * 5,0,255)
+            newPixel = (int(r), int(g), pixel[2], pixel[3])
+            newImg.putpixel((x, y), tuple(newPixel))
+
+
+    newImg.save(newPngFile, "PNG")
+    print u"生成文件： " + newPngFile
+
+def walkPath(dirname,newDir):
+    for n in os.listdir(dirname):
+        path = os.path.join(dirname,n)
+        if os.path.isdir(path):
+            newPath = os.path.join(newDir,n)
+            if not os.path.exists(newPath):
+                os.makedirs(newPath)
+            walkPath(path,newPath)
+        elif os.path.splitext(n)[-1] == ".png":
+            newFile = os.path.join(newDir,n.replace("ktv","golden"))
+            parsePng1(path,newFile)
+
+def parse1():
+    global imgDir
+    global newDir
+    walkPath(imgDir,newDir)
+
 
 def main(argv):
     global imgDir
+    global newDir
     global span
     global spanCount
     try:
@@ -122,11 +178,15 @@ def main(argv):
         elif opt in ("-c", "--spanCount"):
             spanCount = int(arg)
 
+    imgDir = os.path.abspath(r"F:\work\n5\roll\art\resources\game\building\bd_ktv")
+    newDir = os.path.abspath(r"F:\work\n5\roll\art\resources\game\building\bd_golden")
+
 
     try:
-        parse()
+        # parse()
+        parse1()
     except Exception,e:
-        print u"出错咯： " + e.message
+        print traceback.print_exc()
 
 
 if __name__ == '__main__':

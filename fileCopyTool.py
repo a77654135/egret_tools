@@ -38,6 +38,8 @@ def work():
             if not k:
                 continue
             k = os.path.abspath(k)
+            if not os.path.exists(k):
+                continue
             if v == "":
                 removeFiles.append(k)
                 continue
