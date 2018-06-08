@@ -48,7 +48,7 @@ def work():
             if not os.path.exists(p) and not re.search(r"\.",p):
                 os.makedirs(p)
 
-            if os.path.isdir(k):
+            if os.path.isdir(k) and os.path.exists(k):
                 copyDir(k,p)
             else:
                 try:
@@ -58,7 +58,8 @@ def work():
                         tf = os.path.join(p, os.path.split(k)[1])
                 except:
                     tf = os.path.join(p, os.path.split(k)[1])
-                shutil.copy(k, tf)
+                if os.path.exists(k):
+                    shutil.copy(k, tf)
                 print "{} -----> {}".format(k, tf)
 
 
