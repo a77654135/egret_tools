@@ -159,6 +159,30 @@ def parseData():
         panelData[name] = new_list
 
 
+def mergeData():
+    """
+    合并原来的数据,如果原来有图片，并且图片存在，就保留，否则不保留
+    :return:
+    """
+    global documentDir
+    global panelData
+    global resInfo
+
+    panelFile = os.path.join(documentDir, "panel_n5.json")
+    if os.path.exists(panelFile):
+        with open(panelFile, "r") as f:
+            content = json.load(f)
+        for panelName in content:
+            if panelName not in panelData:
+                new_list = [x for x in content[panelName] if x in resInfo]
+                panelData[panelName] = new_list
+            else:
+                new_list = (x for x in content[panelName] if x in resInfo and x not in panelData[panelName])
+                panelData[panelName].extend(new_list)
+
+
+
+
 def main(argv):
     global projDir
     global documentDir
@@ -181,14 +205,15 @@ def main(argv):
         elif opt in ("-d", "--documentDir"):
             documentDir = os.path.abspath(arg)
 
-    # projDir = r"F:\work\n5\roll\client\client"
-    # documentDir = r"F:\work\n5\roll\document\表单\json"
+    projDir = r"F:\work\n5\roll\client\client"
+    documentDir = r"F:\work\n5\roll\document\表单\json".decode("utf-8")
 
     try:
         parseResFile()
         scanExmls()
         scanTs()
         parseData()
+        mergeData()
 
         global panelData
         with open(os.path.join(documentDir, "panel_n5.json").decode("utf-8"), "w") as f:
