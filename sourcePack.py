@@ -180,6 +180,8 @@ def mergeData():
                 new_list = (x for x in content[panelName] if x in resInfo and x not in panelData[panelName])
                 panelData[panelName].extend(new_list)
 
+            panelData[panelName] = filter(lambda v: True if not v.startswith("num_") else False, panelData[panelName])
+
 
 
 
