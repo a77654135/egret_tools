@@ -103,7 +103,7 @@ def clamp(v,minv,maxv):
     return max(min(maxv,v),minv)
 
 def parsePng1(pngFile,newPngFile):
-    # print "parse png:  " + pngFile
+    print "parse png:  " + pngFile
     img = Image.open(pngFile, mode="r")
     newImg = Image.new("RGBA", (img.width, img.height), (0, 0, 0, 0))
 
@@ -126,11 +126,17 @@ def parsePng1(pngFile,newPngFile):
             # a = newPixel[3]
             # newPixel = (r * 255, g * 255, b * 255, a * 255)
             # print pixel
+
+            #变金色
             r = clamp(pixel[0] * 5,0,255)
             g = clamp(pixel[1] * 5,0,255)
             newPixel = (int(r), int(g), pixel[2], pixel[3])
             newImg.putpixel((x, y), tuple(newPixel))
 
+            # 灰度化
+            grey = clamp(int(pixel[0] * 0.22 + pixel[1] * 0.707 + pixel[2] * 0.071), 0, 255)
+            newPixel = (grey, grey, grey, pixel[3])
+            newImg.putpixel((x, y), tuple(newPixel))
 
     newImg.save(newPngFile, "PNG")
     print u"生成文件： " + newPngFile
@@ -144,7 +150,7 @@ def walkPath(dirname,newDir):
                 os.makedirs(newPath)
             walkPath(path,newPath)
         elif os.path.splitext(n)[-1] == ".png":
-            newFile = os.path.join(newDir,n.replace("ktv","golden"))
+            newFile = os.path.join(newDir,n.replace("ktv","grey"))
             parsePng1(path,newFile)
 
 def parse1():
@@ -179,7 +185,7 @@ def main(argv):
             spanCount = int(arg)
 
     imgDir = os.path.abspath(r"F:\work\n5\roll\art\resources\game\building\bd_ktv")
-    newDir = os.path.abspath(r"F:\work\n5\roll\art\resources\game\building\bd_golden")
+    newDir = os.path.abspath(r"F:\work\n5\roll\art\resources\game\building\bd_grey")
 
 
     try:
