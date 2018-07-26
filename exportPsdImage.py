@@ -149,13 +149,13 @@ def main(argv):
         opts, args = getopt.getopt(argv, "p:i:", ["psdDir=", "imgDir="])
     except getopt.GetoptError:
         print "--------------------------------------------"
-        print 'convertPsd -p <psdDir> -i <imgDir>'
+        print 'exportPsdImage -p <psdDir> -i <imgDir>'
         print "--------------------------------------------"
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print "--------------------------------------------"
-            print 'convertPsd -p <psdDir> -is <imgDir>'
+            print 'exportPsdImage -p <psdDir> -is <imgDir>'
             print "--------------------------------------------"
             sys.exit(2)
         elif opt in ("-p", "--psdDir"):
