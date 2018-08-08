@@ -1,11 +1,16 @@
 #-.-coding:utf-8
 
+"""
+导出PSD的图层，参数-p如果是dir，就导出dir下的所有psd，也可以指定为特定的psd文件
+"""
+
 import os
 import getopt
 import sys
 import traceback
 import json
 import shutil
+import re
 from psd_tools import PSDImage,Layer,Group
 
 psdDir = ""
@@ -19,6 +24,12 @@ curPsd = ""
 layer_image = layer.as_PIL()
 layer_image.save(pngFile)
 '''
+
+idx = 0
+def getName():
+    global idx
+    idx += 1
+    return "img_name_{}".format(idx)
 
 #获得图层或图层组的尺寸信息
 def getDimension(layer):
@@ -55,6 +66,8 @@ def parseLayer(layer,dir):
     global data
     try:
         name = layer.name.strip().split(":")[0].strip().split(" ")[0].strip()
+        if not re.match(r'[0-9a-zA-Z_]+',name):
+            name = getName()
         _,__,w,h = getDimension(layer)
         if data.has_key(name):
             attr = data[name]
@@ -67,11 +80,6 @@ def parseLayer(layer,dir):
                 imgName = os.path.join(dir, "{}.png".format(name))
                 layer_image.save(imgName)
                 print "export png successfully.  " + (imgName)
-                # if isinstance(name,unicode):
-                #     print "imgname:"+name
-                #     global curPsd
-                #     print curPsd
-                #     print ""
         else:
             d = {}
             d["w"] = w
@@ -82,11 +90,6 @@ def parseLayer(layer,dir):
             layer_image.save(imgName)
 
             print "export png successfully.  " + (imgName)
-            # if isinstance(name, unicode):
-            #     print "imgname:" + name
-            #     global curPsd
-            #     print curPsd
-            #     print ""
     except Exception,e:
         pass
 
@@ -111,12 +114,6 @@ def parseFile(file,depth,fileName):
     global imgDir
     global data
     psdImgDir = os.path.join(os.path.abspath(imgDir),*depth)
-    #psdImgDir = os.path.join(psdImgDir,fileName.split(r".")[0])
-    # try:
-    #     if os.path.exists(psdImgDir):
-    #         shutil.rmtree(psdImgDir)
-    # except:
-    #     pass
     if not os.path.exists(psdImgDir):
         os.makedirs(psdImgDir)
     psd = PSDImage.load(file)
@@ -139,7 +136,12 @@ def walkDir(dir,depth):
 
 def parse():
     global psdDir
-    walkDir(os.path.abspath(psdDir),[])
+
+    psdDir = os.path.abspath(psdDir)
+    if os.path.isdir(psdDir):
+        walkDir(os.path.abspath(psdDir),[])
+    elif os.path.isfile(psdDir):
+        parseFile(psdDir,[], "")
 
 
 def main(argv):
